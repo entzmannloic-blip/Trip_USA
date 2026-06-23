@@ -1778,6 +1778,11 @@ html, body {
   transform:rotate(-45deg) scale(1.18);
   box-shadow:0 5px 16px rgba(0,0,0,.6);
 }
+.trip-marker.active{
+  background:#e8893a;
+  transform:rotate(-45deg) scale(1.25);
+  box-shadow:0 0 0 4px rgba(201,119,58,.35), 0 6px 20px rgba(0,0,0,.6);
+}
 .leaflet-marker-icon.trip-marker-wrap{background:transparent;border:none}
 /* Attribution discrete sur fond sombre */
 .leaflet-control-attribution{
@@ -1786,6 +1791,164 @@ html, body {
   font-size:10px !important;
 }
 .leaflet-control-attribution a{color:rgba(255,255,255,.75) !important}
+</style>
+
+<style id="stage-panel-css">
+/* ══ STAGE PANEL — sidebar desktop / sheet mobile ══════════ */
+
+/* Overlay (mobile + desktop) */
+.stage-panel-overlay{
+  display:none;
+  position:fixed;inset:0;z-index:1100;
+  background:rgba(0,0,0,.45);
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+  opacity:0;
+  transition:opacity .25s;
+}
+.stage-panel-overlay.visible{ display:block; opacity:1; }
+
+/* Panel commun */
+.stage-panel{
+  position:fixed;
+  z-index:1110;
+  background:linear-gradient(160deg,#1e1812 0%,#17120e 100%);
+  border:1px solid rgba(201,119,58,.18);
+  box-shadow:0 24px 64px rgba(0,0,0,.55);
+  transition:transform .3s cubic-bezier(.22,.68,0,1.2), opacity .25s;
+  opacity:0;
+  pointer-events:none;
+}
+.stage-panel.visible{ opacity:1; pointer-events:auto; }
+
+/* ── Desktop : sidebar droite ── */
+@media(min-width:700px){
+  .stage-panel{
+    top:52px; right:0; bottom:0;
+    width:300px;
+    border-radius:16px 0 0 16px;
+    transform:translateX(100%);
+    display:flex; flex-direction:column;
+  }
+  .stage-panel.visible{ transform:translateX(0); }
+  .sp-handle{ display:none; }
+}
+
+/* ── Mobile : bottom sheet ── */
+@media(max-width:699px){
+  .stage-panel{
+    left:0; right:0; bottom:0;
+    border-radius:20px 20px 0 0;
+    transform:translateY(100%);
+    max-height:72vh;
+  }
+  .stage-panel.visible{ transform:translateY(0); }
+  .sp-handle{
+    width:40px; height:4px;
+    background:rgba(255,255,255,.18);
+    border-radius:2px;
+    margin:10px auto 0;
+    flex-shrink:0;
+  }
+}
+
+.sp-inner{
+  display:flex;flex-direction:column;
+  height:100%;overflow:hidden;
+}
+
+/* Header nav */
+.sp-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px 10px;
+  flex-shrink:0;
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.sp-nav{
+  display:flex;align-items:center;gap:8px;
+}
+.sp-nav-btn{
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);
+  color:#f7f3ee;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  transition:background .15s, transform .1s;
+}
+.sp-nav-btn:hover:not(:disabled){ background:rgba(201,119,58,.25); }
+.sp-nav-btn:active:not(:disabled){ transform:scale(.92); }
+.sp-nav-btn:disabled{ opacity:.3; cursor:default; }
+.sp-nav-btn svg{ width:16px;height:16px; }
+.sp-step-counter{
+  font-size:12px;color:rgba(247,243,238,.5);
+  font-variant-numeric:tabular-nums;
+  min-width:36px;text-align:center;letter-spacing:.04em;
+}
+.sp-close{
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);
+  color:rgba(247,243,238,.7);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  transition:background .15s;
+}
+.sp-close:hover{ background:rgba(220,60,60,.25); color:#f7f3ee; }
+.sp-close svg{ width:14px;height:14px; }
+
+/* Body */
+.sp-body{
+  flex:1;overflow-y:auto;
+  padding:20px 20px 28px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.sp-eyebrow{
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent,#c9773a);
+}
+.sp-city{
+  font-family:'Playfair Display',serif;
+  font-size:28px;font-weight:700;line-height:1.15;
+  color:#f7f3ee;
+}
+.sp-dates{
+  font-size:14px;color:rgba(247,243,238,.6);
+  font-variant-numeric:tabular-nums;
+}
+.sp-divider{
+  height:1px;background:rgba(255,255,255,.08);
+  margin:14px 0 10px;
+}
+
+/* Boutons d'action */
+.sp-actions{
+  display:flex;flex-direction:column;gap:10px;
+}
+.sp-btn{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 16px;border-radius:12px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  color:#f7f3ee;font-size:14px;font-weight:500;
+  cursor:pointer;text-align:left;
+  transition:background .15s, border-color .15s, transform .1s;
+  width:100%;
+}
+.sp-btn:hover{
+  background:rgba(201,119,58,.15);
+  border-color:rgba(201,119,58,.4);
+}
+.sp-btn:active{ transform:scale(.98); }
+.sp-btn-icon{
+  width:36px;height:36px;border-radius:8px;
+  background:rgba(201,119,58,.15);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:18px;
+}
+.sp-btn-text{ display:flex;flex-direction:column;gap:2px; }
+.sp-btn-label{ font-size:14px;font-weight:600;color:#f7f3ee; }
+.sp-btn-sub{ font-size:11px;color:rgba(247,243,238,.45); }
 </style>
 
 </head>
@@ -1822,31 +1985,41 @@ html, body {
 <div class="hero-map-stage">
   <div id="map-leaflet" aria-label="Carte interactive du road trip"></div>
 </div>
-<!-- Floating tooltip -->
-      <div class="map-tooltip" id="map-tooltip">
-        <div class="map-tooltip-num" id="tt-num"></div>
-        <div class="map-tooltip-city" id="tt-city"></div>
-        <div class="map-tooltip-dates" id="tt-dates"></div>
-        <div class="map-tooltip-btns" id="tt-btns"></div>
+<!-- ══ STAGE PANEL (sidebar desktop / sheet mobile) ══════ -->
+<div id="stage-panel" class="stage-panel" role="dialog" aria-modal="true" aria-label="Détail de l'étape">
+  <div class="sp-inner">
+    <!-- Header -->
+    <div class="sp-header">
+      <div class="sp-nav">
+        <button class="sp-nav-btn" id="sp-prev" onclick="navStagePanel(-1)" aria-label="Étape précédente" disabled>
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5l-5 5 5 5"/></svg>
+        </button>
+        <span class="sp-step-counter" id="sp-counter">1 / 9</span>
+        <button class="sp-nav-btn" id="sp-next" onclick="navStagePanel(1)" aria-label="Étape suivante">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 5l5 5-5 5"/></svg>
+        </button>
       </div>
+      <button class="sp-close" onclick="closeStagePanel()" aria-label="Fermer">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l10 10M15 5l-10 10"/></svg>
+      </button>
+    </div>
+    <!-- Handle (mobile drag) -->
+    <div class="sp-handle"></div>
+    <!-- Body -->
+    <div class="sp-body">
+      <div class="sp-eyebrow" id="sp-num">Étape 1</div>
+      <div class="sp-city" id="sp-city">San Francisco</div>
+      <div class="sp-dates" id="sp-dates">04 → 07 sept.</div>
+      <div class="sp-divider"></div>
+      <div class="sp-actions" id="sp-actions"></div>
+    </div>
+  </div>
+</div>
+<div class="stage-panel-overlay" id="stage-panel-overlay" onclick="closeStagePanel()"></div>
 
     </div><!-- end map-container -->
   </div><!-- end map-wrap -->
 </section>
-</div>
-
-<!-- ══ MAP BOTTOM SHEET (mobile) ══════════════════════ -->
-<div class="map-bottom-sheet" id="map-bottom-sheet" onclick="hideMapBottomSheet(event)">
-  <div class="map-bs-card" id="map-bs-card">
-    <div class="map-bs-handle"></div>
-    <button class="map-bs-close" onclick="hideMapBottomSheet()">✕</button>
-    <div class="map-bs-body">
-      <div class="map-bs-num" id="bs-num"></div>
-      <div class="map-bs-city" id="bs-city"></div>
-      <div class="map-bs-dates" id="bs-dates"></div>
-      <div class="map-bs-btns" id="bs-btns"></div>
-    </div>
-  </div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════
@@ -5330,146 +5503,115 @@ function navStep(dir, panelType){
 }
 
 
-function hideMapTooltip(){
-  var tt=document.getElementById('map-tooltip');
-  if(tt) tt.classList.remove('visible');
-}
+function hideMapTooltip(){ /* legacy no-op – remplacé par closeStagePanel */ }
+function hideMapBottomSheet(){ /* legacy no-op */ }
+function isMobile(){ return window.innerWidth <= 699; }
 
-function hideMapBottomSheet(e){
-  if(e && e.target !== e.currentTarget) return;
-  var bs = document.getElementById('map-bottom-sheet');
-  if(bs) bs.classList.remove('visible');
-}
+// ─────────────────────────────────────────────────────
+// Stage Panel — sidebar desktop / sheet mobile
+// Remplace tooltip + bottom-sheet
+// ─────────────────────────────────────────────────────
+var _currentStepPanel = null;
 
-function isMobile(){ return window.innerWidth <= 600; }
-
-function mapClick(step, e){
-  if(e){ e.preventDefault(); e.stopPropagation(); }
+function openStagePanel(step){
   var cfg = MAP_STEPS[step];
   if(!cfg) return;
+  _currentStepPanel = step;
 
-  // ── Mobile: bottom sheet ──
-  if(isMobile()){
-    document.getElementById('bs-num').textContent  = cfg.num;
-    document.getElementById('bs-city').textContent = cfg.city;
-    document.getElementById('bs-dates').textContent = cfg.dates;
-    var bsBtns = document.getElementById('bs-btns');
-    bsBtns.innerHTML = `
-      <button class="map-bs-btn-loge" type="button" data-loge="${cfg.loge}" data-act-pair="${cfg.act}">🏨 Hébergement</button>
-      <button class="map-bs-btn-act"  type="button" data-act="${cfg.act}"  data-loge-pair="${cfg.loge}">🗺 Activités</button>
-    `;
-    bsBtns.querySelector('[data-loge]').addEventListener('click', function(ev){
-      ev.stopPropagation();
-      document.getElementById('map-bottom-sheet').classList.remove('visible');
-      openLoge(this.getAttribute('data-loge'), this.getAttribute('data-act-pair'));
-    });
-    bsBtns.querySelector('[data-act]').addEventListener('click', function(ev){
-      ev.stopPropagation();
-      document.getElementById('map-bottom-sheet').classList.remove('visible');
-      openAct(this.getAttribute('data-act'), null, ev, this.getAttribute('data-loge-pair'));
-    });
-    document.getElementById('map-bottom-sheet').classList.add('visible');
-    return;
-  }
+  // Remplir le contenu
+  document.getElementById('sp-num').textContent   = cfg.num;
+  document.getElementById('sp-city').textContent  = cfg.city;
+  document.getElementById('sp-dates').textContent = cfg.dates;
+  document.getElementById('sp-counter').textContent = step + ' / ' + Object.keys(MAP_STEPS).length;
 
-  // ── Desktop: floating tooltip ──
-  var marker = (e && e.currentTarget) ? e.currentTarget : document.querySelector('.map-marker[data-step="'+step+'"]');
-  var container = document.getElementById('map-container');
-  var tt = document.getElementById('map-tooltip');
-  if(!marker || !container || !tt) return;
+  // Navigation ← →
+  document.getElementById('sp-prev').disabled = (step <= 1);
+  document.getElementById('sp-next').disabled = (step >= Object.keys(MAP_STEPS).length);
 
-  document.getElementById('tt-num').textContent = cfg.num;
-  document.getElementById('tt-city').textContent = cfg.city;
-  document.getElementById('tt-dates').textContent = cfg.dates;
+  // Boutons d'action
+  var actions = document.getElementById('sp-actions');
+  actions.innerHTML =
+    '<button class="sp-btn" onclick="closeStagePanel();openLoge(\''+cfg.loge+'\',\''+cfg.act+'\')">'+
+      '<span class="sp-btn-icon">🏨</span>'+
+      '<span class="sp-btn-text">'+
+        '<span class="sp-btn-label">Hébergement</span>'+
+        '<span class="sp-btn-sub">Voir les options et réservations</span>'+
+      '</span>'+
+    '</button>'+
+    '<button class="sp-btn" onclick="closeStagePanel();openAct(\''+cfg.act+'\',null,null,\''+cfg.loge+'\')">'+
+      '<span class="sp-btn-icon">🗺️</span>'+
+      '<span class="sp-btn-text">'+
+        '<span class="sp-btn-label">Activités</span>'+
+        '<span class="sp-btn-sub">Programme jour par jour</span>'+
+      '</span>'+
+    '</button>';
 
-  var btns = document.getElementById('tt-btns');
-  btns.innerHTML = `
-    <button class="map-tooltip-btn btn-loge" type="button" data-loge="${cfg.loge}" data-act-pair="${cfg.act}">Hébergement</button>
-    <button class="map-tooltip-btn btn-act"  type="button" data-act="${cfg.act}"  data-loge-pair="${cfg.loge}">Activités</button>
-  `;
-  var logeBtn = btns.querySelector('[data-loge]');
-  var actBtn = btns.querySelector('[data-act]');
-  if(logeBtn){
-    logeBtn.addEventListener('click', function(ev){
-      ev.preventDefault(); ev.stopPropagation();
-      hideMapTooltip();
-      openLoge(this.getAttribute('data-loge'), this.getAttribute('data-act-pair'));
-    });
-  }
-  if(actBtn){
-    actBtn.addEventListener('click', function(ev){
-      ev.preventDefault(); ev.stopPropagation();
-      hideMapTooltip();
-      openAct(this.getAttribute('data-act'), null, ev, this.getAttribute('data-loge-pair'));
-    });
-  }
+  // Pulse sur le marqueur actif
+  Object.keys(_tripMarkers).forEach(function(k){
+    var el = _tripMarkers[k]._icon;
+    if(el) el.querySelector('.trip-marker').classList.toggle('active', parseInt(k)===step);
+  });
 
-  var cRect = container.getBoundingClientRect();
-  var mRect = marker.getBoundingClientRect();
-  var ttWidth = 280;
-  tt.style.left = Math.max(16, Math.min(cRect.width - ttWidth - 16, (mRect.left - cRect.left) + (mRect.width/2) - (ttWidth/2))) + 'px';
-  var preferredTop = (mRect.top - cRect.top) - 132;
-  var fallbackTop = (mRect.top - cRect.top) + mRect.height + 12;
-  tt.style.top = (preferredTop < 16 ? fallbackTop : preferredTop) + 'px';
-  tt.classList.add('visible');
+  // Afficher
+  document.getElementById('stage-panel').classList.add('visible');
+  document.getElementById('stage-panel-overlay').classList.add('visible');
 }
 
-document.addEventListener('click', function(e){
-  // Close desktop tooltip
-  var tt = document.getElementById('map-tooltip');
-  if(tt && !tt.contains(e.target) && !(e.target.closest && e.target.closest('.map-marker'))){
-    tt.classList.remove('visible');
-  }
-  // Bottom sheet closes via its own onclick overlay handler
-});
-
-document.querySelectorAll('.map-marker').forEach(function(marker){
-  marker.addEventListener('keydown', function(e){
-    if(e.key === 'Enter' || e.key === ' '){
-      e.preventDefault();
-      var step = parseInt(marker.getAttribute('data-step'), 10);
-      mapClick(step, {preventDefault:function(){}, stopPropagation:function(){}, currentTarget:marker});
-    }
+function closeStagePanel(){
+  document.getElementById('stage-panel').classList.remove('visible');
+  document.getElementById('stage-panel-overlay').classList.remove('visible');
+  // Retirer le pulse sur tous les marqueurs
+  Object.keys(_tripMarkers).forEach(function(k){
+    var el = _tripMarkers[k]._icon;
+    if(el) el.querySelector('.trip-marker').classList.remove('active');
   });
-});
+  _currentStepPanel = null;
+}
 
+function navStagePanel(dir){
+  if(!_currentStepPanel) return;
+  var next = _currentStepPanel + dir;
+  if(MAP_STEPS[next]) openStagePanel(next);
+}
 
-// Robust click binding for generated map hotspots
-(function initGeneratedMapHotspots(){
-  var layer = document.querySelector('.map-hotspots');
-  if(!layer) return;
-  layer.style.pointerEvents = 'auto';
-  layer.querySelectorAll('.map-hotspot').forEach(function(btn){
-    btn.style.pointerEvents = 'auto';
-    btn.addEventListener('click', function(ev){
-      ev.preventDefault();
-      ev.stopPropagation();
-      var step = parseInt(btn.getAttribute('data-step'), 10);
-      mapClick(step, ev);
-    });
-  });
-})();
+// mapClick reste disponible pour rétrocompatibilité (anciens hotspots HTML)
+function mapClick(step, e){
+  if(e){ try{ e.preventDefault(); }catch(x){} try{ e.stopPropagation(); }catch(x){} }
+  openStagePanel(step);
+}
 
-// Escape key closes modals and bottom sheet
+// Fermeture au clic extérieur + Escape
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
+    closeStagePanel();
     document.querySelectorAll('.modal-overlay.active').forEach(function(el){
       el.classList.remove('active');
     });
-    var bs = document.getElementById('map-bottom-sheet');
-    if(bs) bs.classList.remove('visible');
     document.body.style.overflow='';
   }
-  // Flèches ← / → pour naviguer entre destinations quand une modale est ouverte
+  // Flèches ← / → : navigation dans le stage panel ou dans les modales
   if(e.key === 'ArrowLeft' || e.key === 'ArrowRight'){
+    var dir = e.key === 'ArrowRight' ? 1 : -1;
+    if(_currentStepPanel){ e.preventDefault(); navStagePanel(dir); return; }
     var actOpen  = document.getElementById('modal-act') && document.getElementById('modal-act').classList.contains('active');
     var logeOpen = document.querySelector('.modal-overlay[id^="ml-"].active');
     if(!actOpen && !logeOpen) return;
     e.preventDefault();
-    var panelType = actOpen ? 'act' : 'loge';
-    navStep(e.key === 'ArrowRight' ? 1 : -1, panelType);
+    navStep(dir, actOpen ? 'act' : 'loge');
   }
 });
+
+// Dead-code compat : .map-hotspots n'existe plus mais guard si présent
+(function initGeneratedMapHotspots(){
+  var layer = document.querySelector('.map-hotspots');
+  if(!layer) return;
+  layer.querySelectorAll('.map-hotspot').forEach(function(btn){
+    btn.addEventListener('click', function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      openStagePanel(parseInt(btn.getAttribute('data-step'), 10));
+    });
+  });
+})();
 
 // ─────────────────────────────────────────────────────
 // Carte topographique interactive (Leaflet + OpenTopoMap)
