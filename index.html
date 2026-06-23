@@ -5,6 +5,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Grand Ouest Américain — Septembre 2026</title>
+
+<!-- ══ PWA (mode application) ══════════════════════════════ -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c9773a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Grand Ouest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -5397,6 +5408,16 @@ document.addEventListener('keydown',function(e){
     navStep(e.key === 'ArrowRight' ? 1 : -1, panelType);
   }
 });
+</script>
+<script>
+/* Enregistrement du service worker (mode hors-ligne) */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function (e) {
+      console.warn('Service worker non enregistré :', e);
+    });
+  });
+}
 </script>
 </body>
 </html>
