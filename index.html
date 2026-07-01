@@ -5891,21 +5891,46 @@ function initTripMap(){
     attributionControl:true
   });
 
-  // ── Fond de carte : relief léger + rapide ──
-  // 1) Couche de base épurée et rapide (CARTO Voyager, CDN véloce)
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    maxZoom:19,
-    subdomains:'abcd',
-    attribution:'© OpenStreetMap · © CARTO'
-  }).addTo(_tripMap);
+  // ── Fond de carte : relief marqué (tons terre) + repli automatique ──
+  var _reliefFailCount = 0;
+  var _fallbackActive = false;
 
-  // 2) Ombrage du relief par-dessus (Esri Hillshade), discret, pour faire
-  //    ressortir montagnes / canyons / déserts sans alourdir la lecture.
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom:16,
-    opacity:0.35,
+  function _activateFallbackBasemap(){
+    if(_fallbackActive) return;
+    _fallbackActive = true;
+    if(_reliefBase && _tripMap.hasLayer(_reliefBase)) _tripMap.removeLayer(_reliefBase);
+    if(_reliefLabels && _tripMap.hasLayer(_reliefLabels)) _tripMap.removeLayer(_reliefLabels);
+    // Repli connu-fiable : CARTO Voyager + ombrage renforcé
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom:19, subdomains:'abcd', attribution:'© OpenStreetMap · © CARTO'
+    }).addTo(_tripMap).setZIndex(1);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom:16, opacity:0.6, attribution:'Relief © Esri'
+    }).addTo(_tripMap).setZIndex(2);
+  }
+
+  // 1) Relief pur (tons terre, montagnes/canyons/déserts très marqués)
+  var _reliefBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom:13,
     attribution:'Relief © Esri'
   }).addTo(_tripMap);
+
+  // 2) Labels (villes, routes principales) par-dessus le relief
+  var _reliefLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom:13,
+    attribution:'Labels © Esri'
+  }).addTo(_tripMap);
+
+  // Filet de sécurité : si trop de tuiles échouent (service down / bloqué),
+  // on repasse automatiquement sur le fond CARTO qui a fait ses preuves.
+  _reliefBase.on('tileerror', function(){
+    _reliefFailCount++;
+    if(_reliefFailCount >= 4) _activateFallbackBasemap();
+  });
+  _reliefLabels.on('tileerror', function(){
+    _reliefFailCount++;
+    if(_reliefFailCount >= 4) _activateFallbackBasemap();
+  });
 
   // Trace routier réel (depuis KML Google My Maps)
   var path = [];
