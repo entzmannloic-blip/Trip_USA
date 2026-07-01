@@ -1823,20 +1823,16 @@ html, body {
   border-color:rgba(201,119,58,.7);
 }
 .rl-chip-leg{
-  font-weight:700; font-size:12px; line-height:1.1;
+  font-weight:700; font-size:12px; line-height:1.15;
   color:var(--accent-light,#f0dcc9);
   font-variant-numeric:tabular-nums;
 }
-.rl-chip-km{
-  font-weight:600; font-size:11px; line-height:1.1;
+.rl-chip-info{
+  font-size:11px; line-height:1.15;
   font-variant-numeric:tabular-nums;
-  white-space:nowrap;
+  white-space:nowrap; opacity:.85;
 }
-.rl-chip-dur{
-  font-size:10px; line-height:1.1; opacity:.6;
-  font-variant-numeric:tabular-nums;
-  white-space:nowrap;
-}
+.rl-chip-info b{ font-weight:700; opacity:1; }
 
 /* Total, épinglé en bas à gauche */
 .route-legend-total{
@@ -1861,10 +1857,56 @@ html, body {
   .route-legend-top{ top:6px; left:6px; right:6px; gap:3px; }
   .rl-chip{ padding:4px 2px; border-radius:7px; }
   .rl-chip-leg{ font-size:10px; }
-  .rl-chip-km{ font-size:9px; }
-  .rl-chip-dur{ font-size:8px; }
+  .rl-chip-info{ font-size:9px; }
   .route-legend-total{ font-size:12px; padding:6px 11px; bottom:8px; left:8px; }
   .leaflet-top.leaflet-left .leaflet-control-zoom{ margin-top:46px; }
+}
+
+/* ── Étoiles incontournables ── */
+.mustdo-star-wrap{ background:transparent;border:none; }
+.mustdo-star{
+  width:22px;height:22px;
+  display:flex;align-items:center;justify-content:center;
+  color:#f5c87a;font-size:17px;line-height:1;
+  text-shadow:0 1px 3px rgba(0,0,0,.9), 0 0 6px rgba(0,0,0,.6);
+  cursor:pointer;
+  transition:transform .12s;
+}
+.mustdo-star:hover{ transform:scale(1.4); }
+.mustdo-tip{
+  background:rgba(20,16,12,.92) !important;
+  color:#f7f3ee !important;
+  border:1px solid rgba(245,200,122,.4) !important;
+  border-radius:7px !important;
+  font-size:12px !important; font-weight:500 !important;
+  padding:4px 9px !important;
+  box-shadow:0 3px 12px rgba(0,0,0,.5) !important;
+}
+.mustdo-tip::before{ display:none !important; }
+
+/* Bouton toggle incontournables (bas droite) */
+.mustdo-toggle{
+  position:absolute;
+  bottom:10px; right:10px;
+  z-index:1000;
+  display:flex;align-items:center;gap:5px;
+  padding:7px 13px;border-radius:999px;
+  background:rgba(28,22,17,.85);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(245,200,122,.35);
+  color:#f5c87a;font-weight:600;font-size:12px;
+  cursor:pointer;white-space:nowrap;
+  box-shadow:0 3px 12px rgba(0,0,0,.4);
+  transition:background .15s, border-color .15s, transform .1s;
+}
+.mustdo-toggle:hover{ background:rgba(245,200,122,.18); }
+.mustdo-toggle:active{ transform:scale(.95); }
+.mustdo-toggle.active{
+  background:linear-gradient(135deg,#c9a23a,#a8842b);
+  color:#fff;border-color:transparent;
+}
+@media(max-width:699px){
+  .mustdo-toggle{ font-size:11px;padding:6px 11px;bottom:8px;right:8px; }
 }
 </style>
 
@@ -2073,6 +2115,7 @@ html, body {
   <div id="map-leaflet" aria-label="Carte interactive du road trip"></div>
   <div id="route-legend-top" class="route-legend-top" aria-label="Segments du parcours"></div>
   <div id="route-legend-total" class="route-legend-total" aria-label="Distance totale"></div>
+  <button id="mustdo-toggle" class="mustdo-toggle" onclick="toggleMustdo()" aria-label="Afficher les incontournables">★ Incontournables</button>
 </div>
 <!-- ══ STAGE PANEL (sidebar desktop / sheet mobile) ══════ -->
 <div id="stage-panel" class="stage-panel" role="dialog" aria-modal="true" aria-label="Détail de l'étape">
@@ -5727,6 +5770,9 @@ var ROUTE_COORDS = [[37.74672,-122.48672],[37.74596,-122.49481],[37.72962,-122.4
 // Distances/durées routières par segment (étape N → N+1)
 var ROUTE_SEGMENTS = {"1":{"km":323,"dur":"3h48"},"2":{"km":325,"dur":"3h49"},"3":{"km":397,"dur":"4h40"},"4":{"km":247,"dur":"2h54"},"5":{"km":170,"dur":"1h59"},"6":{"km":227,"dur":"2h40"},"7":{"km":310,"dur":"3h38"},"8":{"km":756,"dur":"8h53"}};
 
+// Points d'intérêt "must-do" géolocalisés (★ incontournables)
+var MUSTDO = [{"n":"Battery Spencer","lat":37.8329,"lng":-122.483,"s":1},{"n":"Golden Gate Bridge — traversée à pied","lat":37.8199,"lng":-122.4783,"s":1},{"n":"Haight-Ashbury","lat":37.7699,"lng":-122.4469,"s":1},{"n":"Painted Ladies + Alamo Square","lat":37.7763,"lng":-122.4326,"s":1},{"n":"Twin Peaks — coucher de soleil","lat":37.7544,"lng":-122.4477,"s":1},{"n":"Alcatraz Island","lat":37.8267,"lng":-122.423,"s":1},{"n":"Chinatown — Grant Avenue","lat":37.7941,"lng":-122.4078,"s":1},{"n":"Tunnel View","lat":37.7153,"lng":-119.6773,"s":2},{"n":"El Capitan Meadow","lat":37.7223,"lng":-119.636,"s":2},{"n":"Upper Yosemite Falls","lat":37.7565,"lng":-119.5969,"s":2},{"n":"Glacier Point","lat":37.7274,"lng":-119.5734,"s":2},{"n":"Sentinel Bridge","lat":37.7429,"lng":-119.5875,"s":2},{"n":"Mono Lake Tufa State Reserve","lat":37.9403,"lng":-119.0223,"s":2},{"n":"Alabama Hills","lat":36.6068,"lng":-118.1122,"s":2},{"n":"Lever de soleil — Alabama Hills","lat":36.6068,"lng":-118.1122,"s":3},{"n":"Zabriskie Point","lat":36.42,"lng":-116.8117,"s":3},{"n":"Dante's View","lat":36.2205,"lng":-116.7268,"s":3},{"n":"Badwater Basin","lat":36.2296,"lng":-116.7677,"s":3},{"n":"Artist's Drive + Artist's Palette","lat":36.3616,"lng":-116.8006,"s":3},{"n":"Tour des lobbies iconiques","lat":36.1126,"lng":-115.174,"s":4},{"n":"Fontaines du Bellagio au coucher du soleil","lat":36.1126,"lng":-115.1767,"s":4},{"n":"Dîner — vue fontaines ou Strip","lat":36.1126,"lng":-115.174,"s":4},{"n":"Strip crawl nocturne","lat":36.1147,"lng":-115.1728,"s":4},{"n":"LINQ Promenade & High Roller","lat":36.1175,"lng":-115.169,"s":4},{"n":"Las Vegas","lat":36.1147,"lng":-115.1728,"s":4},{"n":"Scout Lookout (option sans permis)","lat":37.269,"lng":-112.949,"s":5},{"n":"Angels Landing","lat":37.2692,"lng":-112.9483,"s":5},{"n":"The Narrows (bottom-up)","lat":37.2852,"lng":-112.9476,"s":5},{"n":"Observation Point via East Mesa Trail","lat":37.2776,"lng":-112.9389,"s":5},{"n":"Canyon Overlook Trail","lat":37.2131,"lng":-112.9401,"s":5},{"n":"Zion-Mount Carmel Highway (scenic drive)","lat":37.2226,"lng":-112.9377,"s":6},{"n":"Sunrise Point + Sunset Point","lat":37.6252,"lng":-112.1653,"s":6},{"n":"Inspiration Point","lat":37.6156,"lng":-112.1636,"s":6},{"n":"Lever de soleil — Sunrise Point","lat":37.6252,"lng":-112.1653,"s":6},{"n":"Queen's Garden + Navajo Loop","lat":37.6283,"lng":-112.167,"s":6},{"n":"Scenic Drive → Rainbow Point","lat":37.4747,"lng":-112.2255,"s":6},{"n":"Scenic Byway 12 — route panoramique","lat":37.753,"lng":-111.889,"s":6},{"n":"Scenic Byway 12 → US-89","lat":37.753,"lng":-111.889,"s":7},{"n":"Horseshoe Bend","lat":36.8791,"lng":-111.5104,"s":7},{"n":"Upper Antelope Canyon — tour guidé","lat":36.8619,"lng":-111.3743,"s":7},{"n":"Lower Antelope Canyon — tour guidé","lat":36.8894,"lng":-111.4239,"s":7},{"n":"Horseshoe Bend — lever de soleil ou coucher 2","lat":36.8791,"lng":-111.5104,"s":7},{"n":"Horseshoe Bend — lever de soleil final","lat":36.8791,"lng":-111.5104,"s":7},{"n":"Monument Valley — Scenic Drive 🏜️","lat":36.998,"lng":-110.0985,"s":8},{"n":"Rim Trail — Mather → Yavapai Point","lat":36.0656,"lng":-112.1196,"s":8},{"n":"Hopi Point — coucher de soleil 🌅","lat":36.0723,"lng":-112.1462,"s":8},{"n":"Lever de soleil — Mather ou Yaki Point","lat":36.0655,"lng":-112.1197,"s":8},{"n":"South Kaibab Trail → Ooh Aah Point","lat":36.0526,"lng":-112.0838,"s":8},{"n":"Bright Angel Trail → 1,5-Mile Resthouse","lat":36.0574,"lng":-112.1447,"s":8},{"n":"Desert View Watchtower + Navajo Point","lat":36.0435,"lng":-111.8266,"s":8},{"n":"Hermit Road — Pima Point (coucher de soleil)","lat":36.0728,"lng":-112.2011,"s":8},{"n":"Lever de soleil final — Mather Point","lat":36.0614,"lng":-112.1077,"s":8},{"n":"Griffith Observatory + coucher de soleil 🌅","lat":34.1184,"lng":-118.3004,"s":9},{"n":"Venice Beach Boardwalk + Muscle Beach","lat":33.985,"lng":-118.4695,"s":9},{"n":"Santa Monica Pier + Plage","lat":34.0083,"lng":-118.4988,"s":9},{"n":"Getty Center","lat":34.078,"lng":-118.4741,"s":9},{"n":"Pacific Coast Highway — coucher de soleil 🌅","lat":34.03,"lng":-118.56,"s":9},{"n":"Hollywood Sign Hike — Brush Canyon Trail","lat":34.1341,"lng":-118.3215,"s":9},{"n":"Mulholland Drive — nuit sur la ville 🌃","lat":34.125,"lng":-118.38,"s":9}];
+
 var TRIP_COORDS = {
   1:[37.74672,-122.48672], // San Francisco
   2:[37.74081,-119.57959], // Yosemite (Housekeeping Camp)
@@ -5813,6 +5859,36 @@ function initTripMap(){
 
   // ── Barre de légende : total + segments cliquables ──
   renderRouteLegend();
+
+  // ── Couche des incontournables (étoiles), masquée par défaut ──
+  buildMustdoLayer();
+}
+
+var _mustdoLayer = null;
+var _mustdoVisible = false;
+
+function buildMustdoLayer(){
+  if(typeof MUSTDO === 'undefined' || !_tripMap) return;
+  _mustdoLayer = L.layerGroup();
+  MUSTDO.forEach(function(m){
+    var icon = L.divIcon({
+      className:'mustdo-star-wrap',
+      html:'<div class="mustdo-star" title="'+m.n.replace(/"/g,'&quot;')+'">★</div>',
+      iconSize:[22,22], iconAnchor:[11,11]
+    });
+    var mk = L.marker([m.lat,m.lng], {icon:icon, keyboard:false});
+    mk.bindTooltip(m.n, {direction:'top', offset:[0,-8], className:'mustdo-tip'});
+    _mustdoLayer.addLayer(mk);
+  });
+}
+
+function toggleMustdo(){
+  if(!_mustdoLayer || !_tripMap) return;
+  _mustdoVisible = !_mustdoVisible;
+  if(_mustdoVisible){ _mustdoLayer.addTo(_tripMap); }
+  else { _tripMap.removeLayer(_mustdoLayer); }
+  var btn = document.getElementById('mustdo-toggle');
+  if(btn) btn.classList.toggle('active', _mustdoVisible);
 }
 
 // Somme des durées "XhYY" → total lisible
@@ -5844,10 +5920,9 @@ function renderRouteLegend(){
     var n=parseInt(k,10);
     var s=ROUTE_SEGMENTS[k];
     html += '<button class="rl-chip" data-leg="'+n+'" onclick="zoomToLeg('+n+')" '+
-            'title="'+(MAP_STEPS[n]?MAP_STEPS[n].city:'')+' → '+(MAP_STEPS[n+1]?MAP_STEPS[n+1].city:'')+'">'+
+            'title="'+(MAP_STEPS[n]?MAP_STEPS[n].city:'')+' → '+(MAP_STEPS[n+1]?MAP_STEPS[n+1].city:'')+' · '+s.km+' km · '+s.dur+'">'+
               '<span class="rl-chip-leg">'+n+'→'+(n+1)+'</span>'+
-              '<span class="rl-chip-km">'+s.km+' km</span>'+
-              '<span class="rl-chip-dur">'+s.dur+'</span>'+
+              '<span class="rl-chip-info"><b>'+s.km+'</b> km · '+s.dur+'</span>'+
             '</button>';
   });
   top.innerHTML = html;
