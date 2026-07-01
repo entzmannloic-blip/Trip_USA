@@ -1949,10 +1949,10 @@ html, body {
 }
 .mustdo-tip::before{ display:none !important; }
 
-/* Bouton toggle incontournables (bas droite) */
+/* Boutons d'action carte (empilés bas-droite, au-dessus de l'attribution) */
 .mustdo-toggle{
   position:absolute;
-  bottom:10px; right:10px;
+  bottom:34px; right:10px;
   z-index:1000;
   display:flex;align-items:center;gap:5px;
   padding:7px 13px;border-radius:999px;
@@ -1964,6 +1964,69 @@ html, body {
   box-shadow:0 3px 12px rgba(0,0,0,.4);
   transition:background .15s, border-color .15s, transform .1s;
 }
+.todo-toggle{
+  position:absolute;
+  bottom:78px; right:10px;
+  z-index:1000;
+  display:flex;align-items:center;gap:6px;
+  padding:7px 13px;border-radius:999px;
+  background:rgba(28,22,17,.85);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(201,119,58,.45);
+  color:#f0dcc9;font-weight:600;font-size:12px;
+  cursor:pointer;white-space:nowrap;
+  box-shadow:0 3px 12px rgba(0,0,0,.4);
+  transition:background .15s, border-color .15s, transform .1s;
+}
+.todo-toggle:hover{ background:rgba(201,119,58,.22); }
+.todo-toggle:active{ transform:scale(.95); }
+.todo-badge{
+  min-width:18px;height:18px;padding:0 5px;
+  border-radius:999px;
+  background:#d64545;color:#fff;
+  font-size:11px;font-weight:800;line-height:18px;text-align:center;
+  box-shadow:0 1px 4px rgba(0,0,0,.4);
+}
+.todo-badge.done{ background:#3f7a4d; }
+
+/* Items de la liste "À faire" */
+.todo-list{ display:flex;flex-direction:column;gap:10px; }
+.todo-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:13px 14px;border-radius:12px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  cursor:pointer;
+  transition:background .15s, opacity .2s;
+}
+.todo-item:hover{ background:rgba(201,119,58,.12); }
+.todo-item.urgent{ border-color:rgba(214,69,69,.5); }
+.todo-item.checked{ opacity:.45; }
+.todo-item.checked .todo-title{ text-decoration:line-through; }
+.todo-check{
+  width:22px;height:22px;border-radius:6px;flex-shrink:0;
+  border:2px solid rgba(255,255,255,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:#fff;margin-top:1px;
+  transition:background .15s, border-color .15s;
+}
+.todo-item.checked .todo-check{
+  background:#3f7a4d;border-color:#3f7a4d;
+}
+.todo-body{ display:flex;flex-direction:column;gap:3px;min-width:0; }
+.todo-title{ font-size:14px;font-weight:700;color:#f7f3ee;display:flex;align-items:center;gap:6px;flex-wrap:wrap; }
+.todo-when{
+  font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 7px;border-radius:999px;
+}
+.todo-when.now{ background:rgba(214,69,69,.25);color:#ff9d9d;border:1px solid rgba(214,69,69,.5); }
+.todo-when.soon{ background:rgba(245,200,122,.15);color:#f5c87a;border:1px solid rgba(245,200,122,.35); }
+.todo-note{ font-size:12px;color:rgba(247,243,238,.65);line-height:1.45; }
+.todo-link{
+  font-size:12px;font-weight:600;color:var(--accent,#c9773a);
+  text-decoration:none;margin-top:2px;display:inline-block;
+}
+.todo-link:hover{ text-decoration:underline; }
 .mustdo-toggle:hover{ background:rgba(245,200,122,.18); }
 .mustdo-toggle:active{ transform:scale(.95); }
 .mustdo-toggle.active{
@@ -1971,7 +2034,8 @@ html, body {
   color:#fff;border-color:transparent;
 }
 @media(max-width:699px){
-  .mustdo-toggle{ font-size:11px;padding:6px 11px;bottom:8px;right:8px; }
+  .mustdo-toggle{ font-size:11px;padding:6px 11px;bottom:32px;right:8px; }
+  .todo-toggle{ font-size:11px;padding:6px 11px;bottom:72px;right:8px; }
 }
 </style>
 
@@ -2181,7 +2245,27 @@ html, body {
   <div id="route-legend-top" class="route-legend-top" aria-label="Segments du parcours"></div>
   <div id="route-legend-total" class="route-legend-total" aria-label="Distance totale"></div>
   <button id="mustdo-toggle" class="mustdo-toggle" onclick="toggleMustdo()" aria-label="Afficher les incontournables">★ Incontournables</button>
+  <button id="todo-toggle" class="todo-toggle" onclick="openTodoPanel()" aria-label="Réservations à faire">🎯 À faire <span class="todo-badge" id="todo-badge">0</span></button>
 </div>
+
+<!-- ══ PANNEAU "À FAIRE MAINTENANT" (réservations critiques) ══ -->
+<div id="todo-panel" class="stage-panel" role="dialog" aria-modal="true" aria-label="Réservations à faire">
+  <div class="sp-inner">
+    <div class="sp-header">
+      <div class="sp-nav"><span class="sp-step-counter" style="min-width:auto">🎯 Réservations critiques</span></div>
+      <button class="sp-close" onclick="closeTodoPanel()" aria-label="Fermer">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l10 10M15 5l-10 10"/></svg>
+      </button>
+    </div>
+    <div class="sp-handle"></div>
+    <div class="sp-body">
+      <div class="sp-eyebrow">À faire maintenant</div>
+      <div class="sp-dates" style="margin-bottom:8px">Les fenêtres de réservation sont ouvertes — coche au fur et à mesure.</div>
+      <div id="todo-list" class="todo-list"></div>
+    </div>
+  </div>
+</div>
+<div class="stage-panel-overlay" id="todo-panel-overlay" onclick="closeTodoPanel()"></div>
 <!-- ══ STAGE PANEL (sidebar desktop / sheet mobile) ══════ -->
 <div id="stage-panel" class="stage-panel" role="dialog" aria-modal="true" aria-label="Détail de l'étape">
   <div class="sp-inner">
@@ -5713,23 +5797,6 @@ function navStep(dir, panelType){
   }
 }
 
-// Passe à l'étape précédente (-1) ou suivante (+1), même type de panneau.
-function navStep(dir, panelType){
-  var cur = _stepNumFromCurrent(panelType);
-  if(!cur) return;
-  var target = cur + dir;
-  if(!MAP_STEPS[target]) return;
-  var cfg = MAP_STEPS[target];
-  // Met à jour la localisation courante avec la nouvelle étape
-  currentLocation = { logeId: cfg.loge, actKey: cfg.act };
-  _closeAllModals();
-  if(panelType === 'act'){
-    _currentStep = cfg.act;
-    _openActPanel(cfg.act);
-  } else {
-    _openLogePanel(cfg.loge);
-  }
-}
 
 
 function hideMapTooltip(){ /* legacy no-op – remplacé par closeStagePanel */ }
@@ -5818,6 +5885,89 @@ function navStagePanel(dir){
   if(MAP_STEPS[next]) openStagePanel(next);
 }
 
+// ─────────────────────────────────────────────────────
+// Panneau "À faire maintenant" — réservations critiques
+// (fenêtres calées sur les dates du voyage, sept. 2026)
+// ─────────────────────────────────────────────────────
+var TRIP_TODOS = [
+  {id:'alcatraz', icon:'🚢', title:'Billets Alcatraz', urgency:'now',
+   when:'Ventes ouvertes — partent en minutes',
+   note:'Visite prévue à SF (04–07/09). Ouverture des ventes 90 j avant : c\'est déjà ouvert. ~45 $/pers, ferry du matin (9h–9h30), audioguide FR inclus.',
+   url:'https://www.recreation.gov/ticket/facility/234635', linkLabel:'Réserver sur recreation.gov'},
+  {id:'angels', icon:'🥾', title:'Loterie Angels Landing', urgency:'now',
+   when:'Loterie saisonnière : début juillet',
+   note:'Pour la fenêtre sept.→nov., la loterie se joue début juillet (résultats fin juillet, ~30 % de chance). Plan B : loterie la veille pendant le trip. Sans permis → Canyon Overlook ou Observation Point.',
+   url:'https://www.recreation.gov/permits/4675310', linkLabel:'Candidater sur recreation.gov'},
+  {id:'antelope', icon:'🏜️', title:'Tours Antelope Canyon (Upper + Lower)', urgency:'now',
+   when:'Réserver 2-3 mois avant → juillet',
+   note:'Deux tours guidés prévus à Page (17–19/09). Les créneaux photo du midi partent en premier.',
+   url:'https://www.antelopecanyon.com', linkLabel:'Voir les tours'},
+  {id:'eiffel', icon:'🍽️', title:'Eiffel Tower Restaurant — Vegas (11/09)', urgency:'soon',
+   when:'Réserver sous quelques semaines',
+   note:'Complet très vite. Préciser « fountain view table » à la réservation. Budget 50–80 $/pers.',
+   url:'https://www.eiffeltowerrestaurant.com', linkLabel:'Réserver une table'}
+];
+
+function _todoDone(){
+  try{ return JSON.parse(localStorage.getItem('trip_todos_done')||'[]'); }
+  catch(e){ return []; }
+}
+function _todoSave(arr){
+  try{ localStorage.setItem('trip_todos_done', JSON.stringify(arr)); }catch(e){}
+}
+
+function renderTodoList(){
+  var box = document.getElementById('todo-list');
+  if(!box) return;
+  var done = _todoDone();
+  var html = '';
+  TRIP_TODOS.forEach(function(t){
+    var checked = done.indexOf(t.id) !== -1;
+    html += '<div class="todo-item '+(checked?'checked':'')+' '+(t.urgency==='now'?'urgent':'')+'" onclick="toggleTodo(\''+t.id+'\', event)">'+
+      '<div class="todo-check">'+(checked?'✓':'')+'</div>'+
+      '<div class="todo-body">'+
+        '<div class="todo-title">'+t.icon+' '+t.title+' <span class="todo-when '+t.urgency+'">'+t.when+'</span></div>'+
+        '<div class="todo-note">'+t.note+'</div>'+
+        '<a class="todo-link" href="'+t.url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+t.linkLabel+' ↗</a>'+
+      '</div>'+
+    '</div>';
+  });
+  box.innerHTML = html;
+  updateTodoBadge();
+}
+
+function toggleTodo(id, e){
+  if(e) e.stopPropagation();
+  var done = _todoDone();
+  var i = done.indexOf(id);
+  if(i === -1) done.push(id); else done.splice(i,1);
+  _todoSave(done);
+  renderTodoList();
+}
+
+function updateTodoBadge(){
+  var b = document.getElementById('todo-badge');
+  if(!b) return;
+  var done = _todoDone();
+  var pending = TRIP_TODOS.filter(function(t){ return done.indexOf(t.id)===-1; }).length;
+  b.textContent = pending;
+  b.classList.toggle('done', pending === 0);
+}
+
+function openTodoPanel(){
+  closeStagePanel();
+  renderTodoList();
+  document.getElementById('todo-panel').classList.add('visible');
+  document.getElementById('todo-panel-overlay').classList.add('visible');
+}
+function closeTodoPanel(){
+  document.getElementById('todo-panel').classList.remove('visible');
+  document.getElementById('todo-panel-overlay').classList.remove('visible');
+}
+// Badge à jour dès le chargement
+document.addEventListener('DOMContentLoaded', updateTodoBadge);
+if(document.readyState !== 'loading') updateTodoBadge();
+
 // mapClick reste disponible pour rétrocompatibilité (anciens hotspots HTML)
 function mapClick(step, e){
   if(e){ try{ e.preventDefault(); }catch(x){} try{ e.stopPropagation(); }catch(x){} }
@@ -5828,6 +5978,7 @@ function mapClick(step, e){
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
     closeStagePanel();
+    closeTodoPanel();
     document.querySelectorAll('.modal-overlay.active').forEach(function(el){
       el.classList.remove('active');
     });
@@ -5904,13 +6055,16 @@ function initTripMap(){
     maxZoom:19,
     subdomains:'abcd',
     className:'carto-vivid',
+    crossOrigin:'anonymous',
     attribution:'© OpenStreetMap · © CARTO'
   }).addTo(_tripMap);
 
   // 2) Ombrage du relief par-dessus, bien visible (montagnes, canyons)
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom:16,
+    maxNativeZoom:16,
+    maxZoom:19,
     opacity:0.55,
+    crossOrigin:'anonymous',
     attribution:'Relief © Esri'
   }).addTo(_tripMap);
 
