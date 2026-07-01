@@ -5266,6 +5266,38 @@ function showView(id){
 // localisation (tooltip ou bottom sheet), et jamais modifié
 // lors d'un simple switch de panneau.
 var currentLocation = null;
+
+// ─────────────────────────────────────────────────────
+// Verrou de scroll robuste (corrige le bug iOS Safari où
+// une modale position:fixed s'ouvre décalée — au milieu ou
+// en bas — si la page était scrollée avant l'ouverture).
+// On fige le body en position:fixed à l'endroit exact du
+// scroll, puis on restaure la position au moment de fermer.
+// ─────────────────────────────────────────────────────
+var _scrollLockY = 0;
+var _scrollLocked = false;
+function _lockBodyScroll(){
+  if(_scrollLocked) return; // déjà verrouillé (ex: switch Hébergement↔Activités) — ne pas re-capturer
+  _scrollLockY = window.scrollY || window.pageYOffset || 0;
+  document.body.style.position = 'fixed';
+  document.body.style.top = (-_scrollLockY) + 'px';
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+  document.body.style.overflow = 'hidden';
+  _scrollLocked = true;
+}
+function _unlockBodyScroll(){
+  if(!_scrollLocked) return;
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
+  document.body.style.overflow = '';
+  window.scrollTo(0, _scrollLockY);
+  _scrollLocked = false;
+}
 // { logeId: 'page', actKey: 'page' }
 
 // ── Fermeture silencieuse de toutes les modales (sans réinitialiser currentLocation) ──
@@ -5277,7 +5309,6 @@ function _closeAllModals(){
   document.querySelectorAll('.modal-back.visible').forEach(function(b){
     b.classList.remove('visible');
   });
-  document.body.style.overflow = '';
 }
 
 // ── Affiche le bouton switch dans la bonne modale ──
@@ -5351,7 +5382,7 @@ function _openLogePanel(logeId){
   var modal = document.getElementById('ml-' + logeId);
   if(!modal) return;
   modal.classList.add('active');
-  document.body.style.overflow = 'hidden';
+  _lockBodyScroll();
   var body = modal.querySelector('.modal-body');
   if(body) body.scrollTop = 0;
   _applySwitchBtn('loge');
@@ -5372,7 +5403,7 @@ function openLoge(logeId, actKey){
 function closeMl(id){
   document.getElementById('ml-'+id).classList.remove('active');
   document.querySelector('#back-'+id+'.visible') && document.getElementById('back-'+id).classList.remove('visible');
-  document.body.style.overflow='';
+  _unlockBodyScroll();
   currentLocation = null;
 }
 function closeLoge(id,e){ if(e.target===e.currentTarget) closeMl(id); }
@@ -5457,7 +5488,7 @@ function _openActPanel(stepKey){
   actBody.innerHTML = filterBar + nav + content;
   actBody.scrollTop = 0;
   document.getElementById('modal-act').classList.add('active');
-  document.body.style.overflow='hidden';
+  _lockBodyScroll();
   _applySwitchBtn('act');
   _renderStepArrows('act');
 
@@ -5566,7 +5597,7 @@ function closeAct(){
   document.getElementById('modal-act').classList.remove('active');
   var backAct = document.getElementById('back-act');
   if(backAct) backAct.classList.remove('visible');
-  document.body.style.overflow='';
+  _unlockBodyScroll();
   currentLocation = null;
 }
 function closeActModal(e){ if(e.target===e.currentTarget) closeAct(); }
@@ -5794,7 +5825,8 @@ document.addEventListener('keydown',function(e){
     document.querySelectorAll('.modal-overlay.active').forEach(function(el){
       el.classList.remove('active');
     });
-    document.body.style.overflow='';
+    _unlockBodyScroll();
+    currentLocation = null;
   }
   // Flèches ← / → : navigation dans le stage panel ou dans les modales
   if(e.key === 'ArrowLeft' || e.key === 'ArrowRight'){
