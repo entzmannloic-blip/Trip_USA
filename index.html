@@ -1851,6 +1851,12 @@ html, body {
 }
 .leaflet-control-attribution a{color:rgba(255,255,255,.75) !important}
 
+/* Couleurs ravivées sur le fond CARTO : forêts vertes, lacs bleus, déserts ocre
+   Filtre appliqué aux tuiles uniquement — coût de chargement nul. */
+.carto-vivid{
+  filter:saturate(1.55) contrast(1.06) brightness(0.97);
+}
+
 /* ══ Légende distances ══════════════════════════════════ */
 /* Rangée de segments en haut, répartie sur toute la largeur */
 .route-legend-top{
@@ -5891,46 +5897,22 @@ function initTripMap(){
     attributionControl:true
   });
 
-  // ── Fond de carte : relief marqué (tons terre) + repli automatique ──
-  var _reliefFailCount = 0;
-  var _fallbackActive = false;
+  // ── Fond de carte : CARTO rapide + couleurs ravivées + relief renforcé ──
+  // 1) Base CARTO Voyager (CDN véloce ; lacs bleus, forêts vertes, déserts beiges)
+  //    Le filtre CSS .carto-vivid sature les couleurs sans coût de chargement.
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    maxZoom:19,
+    subdomains:'abcd',
+    className:'carto-vivid',
+    attribution:'© OpenStreetMap · © CARTO'
+  }).addTo(_tripMap);
 
-  function _activateFallbackBasemap(){
-    if(_fallbackActive) return;
-    _fallbackActive = true;
-    if(_reliefBase && _tripMap.hasLayer(_reliefBase)) _tripMap.removeLayer(_reliefBase);
-    if(_reliefLabels && _tripMap.hasLayer(_reliefLabels)) _tripMap.removeLayer(_reliefLabels);
-    // Repli connu-fiable : CARTO Voyager + ombrage renforcé
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom:19, subdomains:'abcd', attribution:'© OpenStreetMap · © CARTO'
-    }).addTo(_tripMap).setZIndex(1);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom:16, opacity:0.6, attribution:'Relief © Esri'
-    }).addTo(_tripMap).setZIndex(2);
-  }
-
-  // 1) Relief pur (tons terre, montagnes/canyons/déserts très marqués)
-  var _reliefBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom:13,
+  // 2) Ombrage du relief par-dessus, bien visible (montagnes, canyons)
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom:16,
+    opacity:0.55,
     attribution:'Relief © Esri'
   }).addTo(_tripMap);
-
-  // 2) Labels (villes, routes principales) par-dessus le relief
-  var _reliefLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom:13,
-    attribution:'Labels © Esri'
-  }).addTo(_tripMap);
-
-  // Filet de sécurité : si trop de tuiles échouent (service down / bloqué),
-  // on repasse automatiquement sur le fond CARTO qui a fait ses preuves.
-  _reliefBase.on('tileerror', function(){
-    _reliefFailCount++;
-    if(_reliefFailCount >= 4) _activateFallbackBasemap();
-  });
-  _reliefLabels.on('tileerror', function(){
-    _reliefFailCount++;
-    if(_reliefFailCount >= 4) _activateFallbackBasemap();
-  });
 
   // Trace routier réel (depuis KML Google My Maps)
   var path = [];
