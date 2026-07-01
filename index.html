@@ -2027,6 +2027,43 @@ html, body {
   text-decoration:none;margin-top:2px;display:inline-block;
 }
 .todo-link:hover{ text-decoration:underline; }
+
+/* Surlignage temporaire d'une activité ouverte depuis une étoile */
+@keyframes starFlash{
+  0%{ background:rgba(245,200,122,.28); box-shadow:0 0 0 2px rgba(245,200,122,.55); }
+  100%{ background:transparent; box-shadow:none; }
+}
+.act-item.star-flash{ animation:starFlash 2.4s ease-out; border-radius:12px; }
+
+/* Compte à rebours départ (bas-gauche, au-dessus du total) */
+.countdown-pill{
+  position:absolute;
+  bottom:52px; left:10px;
+  z-index:1000;
+  display:flex;align-items:center;gap:7px;
+  padding:7px 13px;border-radius:999px;
+  background:rgba(28,22,17,.85);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(201,119,58,.45);
+  color:#f7f3ee;font-weight:700;font-size:13px;
+  box-shadow:0 3px 12px rgba(0,0,0,.4);
+  white-space:nowrap;
+}
+.countdown-pill b{ color:#f5c87a;font-size:15px; }
+.countdown-pill .cd-sub{ font-weight:500;font-size:11px;color:rgba(247,243,238,.6); }
+@media(max-width:699px){
+  .countdown-pill{ font-size:12px;padding:6px 11px;bottom:48px;left:8px; }
+  .countdown-pill b{ font-size:13px; }
+}
+
+/* Ligne lever/coucher du soleil dans le stage panel */
+.sp-sun{
+  display:flex;align-items:center;gap:14px;
+  margin-top:4px;
+  font-size:13px;color:rgba(247,243,238,.75);
+  font-variant-numeric:tabular-nums;
+}
+.sp-sun span{ display:flex;align-items:center;gap:5px; }
 .mustdo-toggle:hover{ background:rgba(245,200,122,.18); }
 .mustdo-toggle:active{ transform:scale(.95); }
 .mustdo-toggle.active{
@@ -2244,6 +2281,7 @@ html, body {
   <div id="map-leaflet" aria-label="Carte interactive du road trip"></div>
   <div id="route-legend-top" class="route-legend-top" aria-label="Segments du parcours"></div>
   <div id="route-legend-total" class="route-legend-total" aria-label="Distance totale"></div>
+  <div id="countdown-pill" class="countdown-pill" aria-label="Compte à rebours départ"></div>
   <button id="mustdo-toggle" class="mustdo-toggle" onclick="toggleMustdo()" aria-label="Afficher les incontournables">★ Incontournables</button>
   <button id="todo-toggle" class="todo-toggle" onclick="openTodoPanel()" aria-label="Réservations à faire">🎯 À faire <span class="todo-badge" id="todo-badge">0</span></button>
 </div>
@@ -2291,6 +2329,7 @@ html, body {
       <div class="sp-eyebrow" id="sp-num">Étape 1</div>
       <div class="sp-city" id="sp-city">San Francisco</div>
       <div class="sp-dates" id="sp-dates">04 → 07 sept.</div>
+      <div class="sp-sun" id="sp-sun"></div>
       <div class="sp-divider"></div>
       <div class="sp-actions" id="sp-actions"></div>
     </div>
@@ -3342,7 +3381,8 @@ function item(a){
   let cmt = cmtParsed.text ? `<div class="act-comment"><div class="act-comment-label">💡 Conseils pratiques</div><div class="act-comment-text">${cmtParsed.text}</div></div>` : '';
 
   var interestAttr = (a.interest || '').replace(/"/g,'&quot;');
-  return `<div class="act-item" data-interest="${interestAttr}">
+  var nameAttr = (a.name || '').replace(/\s*⭐.*$/,'').trim().replace(/"/g,'&quot;');
+  return `<div class="act-item" data-interest="${interestAttr}" data-actname="${nameAttr}">
     <div class="act-item-head"><div class="act-name">${a.name}</div>${pr(a.interest)}</div>
     ${chips?`<div class="act-chips">${chips}</div>`:''}
     ${desc}${linksHtml}${cmt}
@@ -5818,6 +5858,8 @@ function openStagePanel(step){
   document.getElementById('sp-num').textContent   = cfg.num;
   document.getElementById('sp-city').textContent  = cfg.city;
   document.getElementById('sp-dates').textContent = cfg.dates;
+  var sunEl = document.getElementById('sp-sun');
+  if(sunEl) sunEl.innerHTML = (typeof stageSunHtml === 'function') ? stageSunHtml(step) : '';
   document.getElementById('sp-counter').textContent = step + ' / ' + Object.keys(MAP_STEPS).length;
 
   // Navigation ← →
@@ -5967,6 +6009,78 @@ function closeTodoPanel(){
 // Badge à jour dès le chargement
 document.addEventListener('DOMContentLoaded', updateTodoBadge);
 if(document.readyState !== 'loading') updateTodoBadge();
+
+// ─────────────────────────────────────────────────────
+// Lever / coucher du soleil par étape (calcul NOAA, hors-ligne)
+// Date de référence = milieu du séjour ; tz = fuseau local (sept. 2026, DST)
+// ─────────────────────────────────────────────────────
+var SUN_STAGE = {
+  1:{d:[2026,9,5],  tz:-7}, // San Francisco (PDT)
+  2:{d:[2026,9,8],  tz:-7}, // Yosemite
+  3:{d:[2026,9,11], tz:-7}, // Lone Pine (lever Alabama Hills le 11)
+  4:{d:[2026,9,12], tz:-7}, // Las Vegas
+  5:{d:[2026,9,13], tz:-6}, // Zion (MDT, Utah)
+  6:{d:[2026,9,16], tz:-6}, // Bryce (MDT)
+  7:{d:[2026,9,18], tz:-7}, // Page (Arizona, pas de DST → MST)
+  8:{d:[2026,9,20], tz:-7}, // Grand Canyon (AZ)
+  9:{d:[2026,9,23], tz:-7}  // Los Angeles (PDT)
+};
+
+function sunTimes(lat, lng, y, m, d, tz){
+  var rad=Math.PI/180, deg=180/Math.PI;
+  var a=Math.floor((14-m)/12), yy=y+4800-a, mm=m+12*a-3;
+  var jd = d + Math.floor((153*mm+2)/5) + 365*yy + Math.floor(yy/4) - Math.floor(yy/100) + Math.floor(yy/400) - 32045;
+  var n = jd - 2451545.0 + 0.0008;
+  var Jstar = n - lng/360.0;
+  var M = (357.5291 + 0.98560028*Jstar) % 360;
+  var C = 1.9148*Math.sin(M*rad) + 0.02*Math.sin(2*M*rad) + 0.0003*Math.sin(3*M*rad);
+  var lam = (M + C + 180 + 102.9372) % 360;
+  var Jtransit = 2451545.0 + Jstar + 0.0053*Math.sin(M*rad) - 0.0069*Math.sin(2*lam*rad);
+  var delta = Math.asin(Math.sin(lam*rad)*Math.sin(23.4397*rad))*deg;
+  var cosH = (Math.sin(-0.833*rad) - Math.sin(lat*rad)*Math.sin(delta*rad)) / (Math.cos(lat*rad)*Math.cos(delta*rad));
+  if(cosH < -1 || cosH > 1) return null;
+  var H = Math.acos(cosH)*deg;
+  function fmt(J){
+    var h = (((J + 0.5) % 1)*24 + tz + 24) % 24;
+    var mn = Math.round((h % 1)*60);
+    var hh = Math.floor(h);
+    if(mn === 60){ mn = 0; hh = (hh+1)%24; }
+    return (hh<10?'0':'')+hh+':'+(mn<10?'0':'')+mn;
+  }
+  return { rise: fmt(Jtransit - H/360), set: fmt(Jtransit + H/360) };
+}
+
+function stageSunHtml(step){
+  var s = SUN_STAGE[step], c = TRIP_COORDS[step];
+  if(!s || !c) return '';
+  var t = sunTimes(c[0], c[1], s.d[0], s.d[1], s.d[2], s.tz);
+  if(!t) return '';
+  return '<span>☀️ '+t.rise+'</span><span>🌇 '+t.set+'</span><span style="opacity:.5;font-size:11px">heure locale</span>';
+}
+
+// ─────────────────────────────────────────────────────
+// Compte à rebours départ (04 sept. → 25 sept. 2026)
+// ─────────────────────────────────────────────────────
+function renderCountdown(){
+  var el = document.getElementById('countdown-pill');
+  if(!el) return;
+  var now = new Date();
+  var start = new Date(2026, 8, 4);   // 04 sept. 2026
+  var end   = new Date(2026, 8, 25);  // 25 sept. 2026
+  var day = 86400000;
+  var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if(today < start){
+    var j = Math.round((start - today)/day);
+    el.innerHTML = '🛫 <b>J−'+j+'</b><span class="cd-sub">départ 4 sept.</span>';
+  } else if(today <= end){
+    var dnum = Math.round((today - start)/day) + 1;
+    el.innerHTML = '🌵 <b>Jour '+dnum+'/22</b><span class="cd-sub">en plein trip !</span>';
+  } else {
+    el.innerHTML = '✨ <b>Souvenirs</b><span class="cd-sub">04→25 sept. 2026</span>';
+  }
+}
+document.addEventListener('DOMContentLoaded', renderCountdown);
+if(document.readyState !== 'loading') renderCountdown();
 
 // mapClick reste disponible pour rétrocompatibilité (anciens hotspots HTML)
 function mapClick(step, e){
@@ -6130,8 +6244,34 @@ function buildMustdoLayer(){
     });
     var mk = L.marker([m.lat,m.lng], {icon:icon, keyboard:false});
     mk.bindTooltip(m.n, {direction:'top', offset:[0,-8], className:'mustdo-tip'});
+    // Clic sur l'étoile → ouvre la fiche de l'activité correspondante
+    mk.on('click', function(){ openActivityFromStar(m.s, m.n); });
     _mustdoLayer.addLayer(mk);
   });
+}
+
+// Ouvre le panneau Activités de l'étape et scrolle/surligne l'activité visée
+function openActivityFromStar(stepNum, actName){
+  var cfg = MAP_STEPS[stepNum];
+  if(!cfg) return;
+  closeStagePanel();
+  openAct(cfg.act, null, null, cfg.loge);
+  // Attendre le rendu du panneau, puis cibler l'item par son data-actname
+  setTimeout(function(){
+    var body = document.getElementById('act-modal-body');
+    if(!body) return;
+    var target = null;
+    body.querySelectorAll('.act-item[data-actname]').forEach(function(el){
+      if(!target && el.getAttribute('data-actname') === actName) target = el;
+    });
+    if(!target) return;
+    var stickyH = (typeof getStickyOffset === 'function') ? getStickyOffset(body) : 0;
+    var bodyRect = body.getBoundingClientRect();
+    var tRect = target.getBoundingClientRect();
+    body.scrollTop = body.scrollTop + (tRect.top - bodyRect.top) - stickyH - 10;
+    target.classList.add('star-flash');
+    setTimeout(function(){ target.classList.remove('star-flash'); }, 2400);
+  }, 350);
 }
 
 function toggleMustdo(){
