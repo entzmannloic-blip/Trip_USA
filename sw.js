@@ -20,7 +20,9 @@ const TILE_HOSTS = [
   'b.basemaps.cartocdn.com',
   'c.basemaps.cartocdn.com',
   'd.basemaps.cartocdn.com',
-  'unpkg.com'
+  'unpkg.com',
+  'fonts.googleapis.com',
+  'fonts.gstatic.com'
 ];
 
 // Installation : pré-cache des assets statiques
