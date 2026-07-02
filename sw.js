@@ -2,7 +2,7 @@
    v2 : réseau d'abord pour le HTML (mises à jour immédiates),
         cache des tuiles de carte (consultation hors-ligne dans les parcs) */
 const CACHE = 'grand-ouest-v2';
-const TILE_CACHE = 'grand-ouest-tiles-v1';
+const TILE_CACHE = 'grand-ouest-tiles-v2';
 const TILE_CACHE_MAX = 1200; // plafond de tuiles conservées (≈ 30-40 Mo)
 
 const ASSETS = [
@@ -80,9 +80,11 @@ self.addEventListener('fetch', (event) => {
   if (TILE_HOSTS.includes(url.hostname)) {
     event.respondWith(
       caches.match(req).then((cached) => {
-        if (cached) return cached;
+        // Ignorer les entrées opaques héritées : elles sont rejetées par
+        // les requêtes CORS (tuile noire). On refetch proprement.
+        if (cached && cached.type !== 'opaque') return cached;
         return fetch(req).then((res) => {
-          if (res && (res.status === 200 || res.type === 'opaque')) {
+          if (res && res.status === 200 && res.type !== 'opaque') {
             const copy = res.clone();
             caches.open(TILE_CACHE).then((cache) => {
               cache.put(req, copy);
