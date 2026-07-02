@@ -2064,6 +2064,62 @@ html, body {
   font-variant-numeric:tabular-nums;
 }
 .sp-sun span{ display:flex;align-items:center;gap:5px; }
+
+/* Apparition en cascade des marqueurs après le dessin du tracé */
+@keyframes markerPop{
+  from{ transform:rotate(-45deg) scale(0); opacity:0; }
+  60%{ transform:rotate(-45deg) scale(1.25); opacity:1; }
+  to{ transform:rotate(-45deg) scale(1); opacity:1; }
+}
+.trip-marker{ animation:markerPop .45s cubic-bezier(.34,1.56,.64,1) backwards; }
+
+/* Marqueur du jour (mode "Jour J") : anneau pulsant */
+@keyframes todayPulse{
+  0%{ box-shadow:0 0 0 0 rgba(214,105,45,.55), 0 3px 10px rgba(0,0,0,.45); }
+  70%{ box-shadow:0 0 0 14px rgba(214,105,45,0), 0 3px 10px rgba(0,0,0,.45); }
+  100%{ box-shadow:0 0 0 0 rgba(214,105,45,0), 0 3px 10px rgba(0,0,0,.45); }
+}
+.trip-marker.today{
+  background:#d6692d;
+  animation:markerPop .45s cubic-bezier(.34,1.56,.64,1) backwards, todayPulse 2s ease-out 2.8s infinite;
+}
+
+/* Badge "vous êtes ici" dans le stage panel */
+.sp-today-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  margin-left:8px;padding:2px 9px;border-radius:999px;
+  background:rgba(214,105,45,.22);border:1px solid rgba(214,105,45,.55);
+  color:#ffb383;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  vertical-align:middle;
+}
+
+/* Bloc météo dans le stage panel */
+.sp-weather{
+  display:flex;flex-direction:column;gap:5px;
+  margin-top:8px;padding:10px 12px;border-radius:10px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  font-size:12px;color:rgba(247,243,238,.8);
+}
+.sp-weather:empty{ display:none; padding:0; margin:0; border:none; }
+.sp-weather-row{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-variant-numeric:tabular-nums;
+}
+.sp-weather-row .wd{ opacity:.65; }
+.sp-weather-title{
+  font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:rgba(247,243,238,.45);
+}
+
+/* Compte à rebours cliquable */
+.countdown-pill{ cursor:pointer; transition:transform .1s, background .15s; }
+.countdown-pill:hover{ background:rgba(201,119,58,.25); }
+.countdown-pill:active{ transform:scale(.96); }
+
+@media(prefers-reduced-motion:reduce){
+  .trip-marker, .trip-marker.today{ animation:none; }
+}
 .mustdo-toggle:hover{ background:rgba(245,200,122,.18); }
 .mustdo-toggle:active{ transform:scale(.95); }
 .mustdo-toggle.active{
@@ -2281,7 +2337,7 @@ html, body {
   <div id="map-leaflet" aria-label="Carte interactive du road trip"></div>
   <div id="route-legend-top" class="route-legend-top" aria-label="Segments du parcours"></div>
   <div id="route-legend-total" class="route-legend-total" aria-label="Distance totale"></div>
-  <div id="countdown-pill" class="countdown-pill" aria-label="Compte à rebours départ"></div>
+  <div id="countdown-pill" class="countdown-pill" onclick="countdownClick()" aria-label="Compte à rebours départ" role="button"></div>
   <button id="mustdo-toggle" class="mustdo-toggle" onclick="toggleMustdo()" aria-label="Afficher les incontournables">★ Incontournables</button>
   <button id="todo-toggle" class="todo-toggle" onclick="openTodoPanel()" aria-label="Réservations à faire">🎯 À faire <span class="todo-badge" id="todo-badge">0</span></button>
 </div>
@@ -2330,6 +2386,7 @@ html, body {
       <div class="sp-city" id="sp-city">San Francisco</div>
       <div class="sp-dates" id="sp-dates">04 → 07 sept.</div>
       <div class="sp-sun" id="sp-sun"></div>
+      <div class="sp-weather" id="sp-weather"></div>
       <div class="sp-divider"></div>
       <div class="sp-actions" id="sp-actions"></div>
     </div>
@@ -5856,10 +5913,15 @@ function openStagePanel(step){
 
   // Remplir le contenu
   document.getElementById('sp-num').textContent   = cfg.num;
-  document.getElementById('sp-city').textContent  = cfg.city;
+  var cityEl = document.getElementById('sp-city');
+  cityEl.textContent = cfg.city;
+  if(typeof currentStageToday === 'function' && currentStageToday() === step){
+    cityEl.innerHTML = cfg.city + '<span class="sp-today-badge">📍 Ici</span>';
+  }
   document.getElementById('sp-dates').textContent = cfg.dates;
   var sunEl = document.getElementById('sp-sun');
   if(sunEl) sunEl.innerHTML = (typeof stageSunHtml === 'function') ? stageSunHtml(step) : '';
+  if(typeof loadStageWeather === 'function') loadStageWeather(step);
   document.getElementById('sp-counter').textContent = step + ' / ' + Object.keys(MAP_STEPS).length;
 
   // Navigation ← →
@@ -6074,13 +6136,86 @@ function renderCountdown(){
     el.innerHTML = '🛫 <b>J−'+j+'</b><span class="cd-sub">départ 4 sept.</span>';
   } else if(today <= end){
     var dnum = Math.round((today - start)/day) + 1;
-    el.innerHTML = '🌵 <b>Jour '+dnum+'/22</b><span class="cd-sub">en plein trip !</span>';
+    var s = (typeof currentStageToday==='function') ? currentStageToday() : null;
+    var city = (s && MAP_STEPS[s]) ? MAP_STEPS[s].city : '';
+    el.innerHTML = '🌵 <b>Jour '+dnum+'/22</b><span class="cd-sub">'+(city ? '📍 '+city : 'en plein trip !')+'</span>';
   } else {
     el.innerHTML = '✨ <b>Souvenirs</b><span class="cd-sub">04→25 sept. 2026</span>';
   }
 }
 document.addEventListener('DOMContentLoaded', renderCountdown);
 if(document.readyState !== 'loading') renderCountdown();
+
+// Clic sur le compte à rebours : contextuel selon la période
+function countdownClick(){
+  var now = new Date();
+  var start = new Date(2026, 8, 4);
+  var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var s = (typeof currentStageToday==='function') ? currentStageToday() : null;
+  if(today < start){
+    // Avant le départ → réservations critiques
+    openTodoPanel();
+  } else if(s && MAP_STEPS[s]){
+    // Pendant le trip → programme du jour (panneau Activités, scrollé au bon jour)
+    var d = now.getDate();
+    var dateKey = (d<10?'0':'')+d+'/09';
+    openAct(MAP_STEPS[s].act, dateKey, null, MAP_STEPS[s].loge);
+  } else {
+    // Après le trip → étape 1, pour le plaisir des souvenirs
+    openStagePanel(1);
+  }
+}
+
+// ─────────────────────────────────────────────────────
+// Météo par étape (Open-Meteo, gratuit sans clé)
+// S'active automatiquement quand les dates entrent dans
+// l'horizon de prévision (~16 jours). Cache local 6 h.
+// ─────────────────────────────────────────────────────
+var STAGE_DATES_ISO = {
+  1:['2026-09-04','2026-09-07'], 2:['2026-09-07','2026-09-10'],
+  3:['2026-09-10','2026-09-11'], 4:['2026-09-11','2026-09-12'],
+  5:['2026-09-12','2026-09-15'], 6:['2026-09-15','2026-09-17'],
+  7:['2026-09-17','2026-09-19'], 8:['2026-09-19','2026-09-22'],
+  9:['2026-09-22','2026-09-25']
+};
+
+function loadStageWeather(step){
+  var box = document.getElementById('sp-weather');
+  if(!box) return;
+  box.innerHTML = '';
+  var dates = STAGE_DATES_ISO[step], c = TRIP_COORDS[step];
+  if(!dates || !c) return;
+  // Horizon : Open-Meteo prévoit ~16 jours. Au-delà, on n'affiche rien.
+  var horizon = new Date(); horizon.setDate(horizon.getDate() + 15);
+  if(new Date(dates[0]) > horizon) return;
+
+  // Cache 6 h
+  var key = 'wx_' + step;
+  try{
+    var cached = JSON.parse(localStorage.getItem(key) || 'null');
+    if(cached && (Date.now() - cached.t) < 6*3600*1000){
+      box.innerHTML = cached.html; return;
+    }
+  }catch(e){}
+
+  var url = 'https://api.open-meteo.com/v1/forecast?latitude='+c[0]+'&longitude='+c[1]+
+    '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto'+
+    '&start_date='+dates[0]+'&end_date='+dates[1];
+  fetch(url).then(function(r){ return r.json(); }).then(function(d){
+    if(!d || !d.daily || !d.daily.time) return;
+    var html = '<div class="sp-weather-title">🌤️ Météo prévue</div>';
+    d.daily.time.forEach(function(iso, i){
+      var dd = iso.slice(8,10)+'/'+iso.slice(5,7);
+      var tmax = Math.round(d.daily.temperature_2m_max[i]);
+      var tmin = Math.round(d.daily.temperature_2m_min[i]);
+      var pp = d.daily.precipitation_probability_max ? d.daily.precipitation_probability_max[i] : null;
+      html += '<div class="sp-weather-row"><span class="wd">'+dd+'</span>'+
+              '<span>'+tmax+'° / '+tmin+'°'+(pp!=null && pp>15 ? ' · 💧'+pp+'%' : '')+'</span></div>';
+    });
+    box.innerHTML = html;
+    try{ localStorage.setItem(key, JSON.stringify({t:Date.now(), html:html})); }catch(e){}
+  }).catch(function(){ /* hors-ligne ou service indispo → rien */ });
+}
 
 // mapClick reste disponible pour rétrocompatibilité (anciens hotspots HTML)
 function mapClick(step, e){
@@ -6186,21 +6321,21 @@ function initTripMap(){
   var path = [];
   Object.keys(TRIP_COORDS).forEach(function(n){ path.push(TRIP_COORDS[n]); });
   // Halo sombre sous le tracé (lisibilité sur fond clair)
-  L.polyline(ROUTE_COORDS, {
+  var _routeHalo = L.polyline(ROUTE_COORDS, {
     color:'#3a2a1a', weight:7, opacity:0.25, lineJoin:'round', lineCap:'round'
   }).addTo(_tripMap);
   // Tracé routier orange
-  L.polyline(ROUTE_COORDS, {
+  var _routeLine = L.polyline(ROUTE_COORDS, {
     color:'#c9773a', weight:4, opacity:0.95, lineJoin:'round', lineCap:'round'
   }).addTo(_tripMap);
 
-  // Marqueurs numérotés cliquables
+  // Marqueurs numérotés cliquables (apparition en cascade après le tracé)
   Object.keys(TRIP_COORDS).forEach(function(nStr){
     var n = parseInt(nStr,10);
     var cfg = MAP_STEPS[n];
     var icon = L.divIcon({
       className:'trip-marker-wrap',
-      html:'<div class="trip-marker" title="'+(cfg?cfg.city:'')+'"><span>'+n+'</span></div>',
+      html:'<div class="trip-marker" style="animation-delay:'+(1.1 + n*0.18).toFixed(2)+'s" title="'+(cfg?cfg.city:'')+'"><span>'+n+'</span></div>',
       iconSize:[30,30],
       iconAnchor:[15,30]
     });
@@ -6223,11 +6358,71 @@ function initTripMap(){
   // Cadre la vue sur l'ensemble des étapes
   _tripMap.fitBounds(path, {padding:[40,40]});
 
+  // ── Animation : la route se dessine SF → LA au chargement ──
+  animateRouteDraw(_routeLine, _routeHalo);
+
+  // ── Mode "Jour J" : marqueur du jour mis en évidence pendant le trip ──
+  applyTodayMarker();
+
   // ── Barre de légende : total + segments cliquables ──
   renderRouteLegend();
 
   // ── Couche des incontournables (étoiles), masquée par défaut ──
   buildMustdoLayer();
+}
+
+// Dessin progressif du tracé (2,4 s) via stroke-dashoffset SVG.
+// Respecte prefers-reduced-motion ; nettoie les props après pour que
+// les re-rendus au zoom restent intacts.
+function animateRouteDraw(line, halo){
+  try{
+    if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    setTimeout(function(){
+      [halo, line].forEach(function(pl){
+        var p = pl && pl._path;
+        if(!p || !p.getTotalLength) return;
+        var len = p.getTotalLength();
+        p.style.transition = 'none';
+        p.style.strokeDasharray = len + ' ' + len;
+        p.style.strokeDashoffset = len;
+        p.getBoundingClientRect(); // reflow
+        p.style.transition = 'stroke-dashoffset 2.4s ease-in-out';
+        p.style.strokeDashoffset = '0';
+        setTimeout(function(){
+          p.style.transition = '';
+          p.style.strokeDasharray = '';
+          p.style.strokeDashoffset = '';
+        }, 2600);
+      });
+    }, 350);
+  }catch(e){ /* silencieux : l'animation est un bonus */ }
+}
+
+// ─────────────────────────────────────────────────────
+// Mode "Jour J" — étape courante selon la date réelle
+// ─────────────────────────────────────────────────────
+// Plages par étape (jours de septembre 2026, début inclus / fin exclue, 25 inclus)
+var TRIP_STAGE_RANGES = {1:[4,7],2:[7,10],3:[10,11],4:[11,12],5:[12,15],6:[15,17],7:[17,19],8:[19,22],9:[22,26]};
+
+function currentStageToday(){
+  var now = new Date();
+  if(now.getFullYear() !== 2026 || now.getMonth() !== 8) return null; // septembre 2026 uniquement
+  var d = now.getDate();
+  for(var s in TRIP_STAGE_RANGES){
+    var r = TRIP_STAGE_RANGES[s];
+    if(d >= r[0] && d < r[1]) return parseInt(s,10);
+  }
+  return null;
+}
+
+function applyTodayMarker(){
+  var s = currentStageToday();
+  if(!s || !_tripMarkers[s]) return;
+  var el = _tripMarkers[s]._icon;
+  if(el){
+    var m = el.querySelector('.trip-marker');
+    if(m) m.classList.add('today');
+  }
 }
 
 var _mustdoLayer = null;
