@@ -2028,6 +2028,54 @@ html, body {
 }
 .todo-link:hover{ text-decoration:underline; }
 
+/* ── Timeline des prélèvements à venir ── */
+.pay-timeline{ margin-top:18px; }
+.pay-title{
+  font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent,#c9773a);margin-bottom:10px;
+  display:flex;align-items:center;gap:6px;
+}
+.pay-row{
+  display:flex;align-items:center;gap:11px;
+  padding:10px 4px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.pay-row:last-of-type{ border-bottom:none; }
+.pay-row.next{ background:rgba(201,119,58,.09);border-radius:10px;padding:10px 10px; }
+.pay-date{
+  flex-shrink:0;width:46px;text-align:center;
+  display:flex;flex-direction:column;line-height:1.15;
+}
+.pay-date .pd-day{ font-size:16px;font-weight:800;color:#f7f3ee;font-variant-numeric:tabular-nums; }
+.pay-date .pd-month{ font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(247,243,238,.5); }
+.pay-body{ flex:1;min-width:0;display:flex;flex-direction:column;gap:2px; }
+.pay-label{ font-size:13px;font-weight:600;color:#f7f3ee;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.pay-meta{ font-size:11px;color:rgba(247,243,238,.5); }
+.pay-amount{ flex-shrink:0;font-size:14px;font-weight:800;color:#f5c87a;font-variant-numeric:tabular-nums; }
+.pay-in{ font-size:10px;color:rgba(247,243,238,.45);text-align:right; }
+.pay-total{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:10px;padding:11px 12px;border-radius:10px;
+  background:rgba(201,119,58,.12);border:1px solid rgba(201,119,58,.35);
+  font-size:13px;font-weight:700;color:#f7f3ee;
+}
+.pay-total b{ color:#f5c87a;font-size:15px;font-variant-numeric:tabular-nums; }
+/* Barre "déjà payé" pédagogique */
+.pay-progress{ margin-top:10px; }
+.pay-progress-label{
+  display:flex;justify-content:space-between;
+  font-size:11px;color:rgba(247,243,238,.6);margin-bottom:5px;
+  font-variant-numeric:tabular-nums;
+}
+.pay-progress-track{
+  height:7px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;
+}
+.pay-progress-fill{
+  height:100%;border-radius:4px;
+  background:linear-gradient(90deg,#3f7a4d,#5ba36c);
+  transition:width .6s ease;
+}
+
 /* Surlignage temporaire d'une activité ouverte depuis une étoile */
 @keyframes starFlash{
   0%{ background:rgba(245,200,122,.28); box-shadow:0 0 0 2px rgba(245,200,122,.55); }
@@ -2179,9 +2227,14 @@ html, body {
     left:0; right:0; bottom:0;
     border-radius:20px 20px 0 0;
     transform:translateY(100%);
-    max-height:72vh;
+    max-height:78vh;
+    max-height:78dvh;
+    height:auto;
+    display:flex; flex-direction:column;
   }
   .stage-panel.visible{ transform:translateY(0); }
+  .sp-inner{ min-height:0; }
+  .sp-body{ -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
   .sp-handle{
     width:40px; height:4px;
     background:rgba(255,255,255,.18);
@@ -2346,7 +2399,7 @@ html, body {
 <div id="todo-panel" class="stage-panel" role="dialog" aria-modal="true" aria-label="Réservations à faire">
   <div class="sp-inner">
     <div class="sp-header">
-      <div class="sp-nav"><span class="sp-step-counter" style="min-width:auto">🎯 Réservations critiques</span></div>
+      <div class="sp-nav"><span class="sp-step-counter" style="min-width:auto">🎯 À prévoir</span></div>
       <button class="sp-close" onclick="closeTodoPanel()" aria-label="Fermer">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l10 10M15 5l-10 10"/></svg>
       </button>
@@ -2356,6 +2409,7 @@ html, body {
       <div class="sp-eyebrow">À faire maintenant</div>
       <div class="sp-dates" style="margin-bottom:8px">Les fenêtres de réservation sont ouvertes — coche au fur et à mesure.</div>
       <div id="todo-list" class="todo-list"></div>
+      <div id="pay-timeline" class="pay-timeline"></div>
     </div>
   </div>
 </div>
@@ -5108,6 +5162,23 @@ const DEP_CONFIG = {
 // 📊 DONNÉES — issues du fichier Excel "Payment"
 const DEPENSES = [
   {
+    label: 'Location voiture Sixt (GMC Acadia 7 pl.)',
+    montant: 1617,
+    paye_par: 'Benoit',
+    categorie: 'transport',
+    statut: 'ok',
+    note: '1 617,42 € payés par Benoît · Réf. 740061049 · SFO 04/09 18h → LAX 25/09 12h'
+  },
+  {
+    label: 'Conducteur additionnel (Sixt)',
+    montant: 220,
+    paye_par: 'Benoit',
+    categorie: 'transport',
+    statut: 'sur_place',
+    echeance: '2026-09-04', montant_du: 220, carte: 'CB Benoît',
+    note: 'US$255 (≈ 220 €) · à régler au comptoir Sixt SFO le 4 sept. à la prise du véhicule'
+  },
+  {
     label: 'Avion',
     montant: 2532,
     paye_par: 'P&L',
@@ -5138,6 +5209,7 @@ const DEPENSES = [
     paye_par: 'P&L',
     categorie: 'logement',
     statut: 'differe',
+    echeance: '2026-08-28', montant_du: 180,
     note: '180 € à payer le 28 août · annulation gratuite avant le 5 sept.'
   },
   {
@@ -5147,6 +5219,7 @@ const DEPENSES = [
     categorie: 'logement',
     statut: 'ok',
     rembourse: false,
+    echeance: '2026-09-03', montant_du: 795.83,
     note: 'Paiement différé : 795,83 € à payer le 3 sept. · Annulation gratuite avant le 11 sept.'
   },
   {
@@ -5155,6 +5228,7 @@ const DEPENSES = [
     paye_par: 'P&L',
     categorie: 'logement',
     statut: 'differe',
+    echeance: '2026-09-02', montant_du: 244.90,
     note: '216,34 € payés · 244,90 € à payer le 2 sept.'
   },
   {
@@ -5163,6 +5237,7 @@ const DEPENSES = [
     paye_par: 'P&L',
     categorie: 'logement',
     statut: 'differe',
+    echeance: '2026-09-04', montant_du: 280.64,
     note: '247,91 € payés · 280,64 € à payer le 4 sept. · annulation avant le 20 août'
   },
   {
@@ -5171,6 +5246,7 @@ const DEPENSES = [
     paye_par: 'P&L',
     categorie: 'logement',
     statut: 'sur_place',
+    echeance: '2026-09-11', montant_du: 257, carte: 'Crédit Mutuelle',
     note: 'Paiement à l\'hôtel · Carte Crédit Mutuelle · Réf. 5044277482 · Annulation avant le 9 sept.'
   },
   {
@@ -5179,6 +5255,7 @@ const DEPENSES = [
     paye_par: 'P&L',
     categorie: 'logement',
     statut: 'sur_place',
+    echeance: '2026-09-15', montant_du: 698, carte: 'Revolut Joint',
     note: 'Paiement à l\'hôtel · Carte Revolut Joint · Réf. 5764575758 · Annulation avant le 15 sept.'
   },
   {
@@ -5219,24 +5296,28 @@ function initDepenses(){
   // Total avancé par P&L
   const advancedA = DEPENSES.filter(d=>d.paye_par==='P&L').reduce((s,d)=>s+d.montant,0);
 
+  // Total avancé par Benoit (ex. location voiture Sixt)
+  const advancedB = DEPENSES.filter(d=>d.paye_par==='Benoit').reduce((s,d)=>s+d.montant,0);
+
   // Déjà remboursés (colonne Remboursement = OK)
   const dejaRembourse = DEPENSES.filter(d=>d.rembourse).reduce((s,d)=>s+d.montant,0);
 
   // Ce que Benoit doit réellement :
-  // Sa part du total - ce qui a déjà été remboursé (l'avion = remboursement global)
-  // L'avion étant remboursé, Benoit a déjà payé sa part de l'avion (dejaRembourse / 3)
+  // Sa part du total − sa part déjà réglée (avion remboursé / 3) − ce qu'il a avancé lui-même
   const benoitDejaRegle = Math.round(dejaRembourse / totalParts);
-  const benoitDoit = Math.round(shareBenoit - benoitDejaRegle);
+  const benoitDoit = Math.round(shareBenoit - benoitDejaRegle - advancedB);
 
   // Hero
   document.getElementById('dep-total').innerHTML = fmt(total).replace(' €','') + ' <span>€</span>';
   document.getElementById('dep-pl-paid').textContent = fmt(advancedA);
   document.getElementById('dep-pl-share').textContent = fmt(sharePerrine + shareLoic);
-  document.getElementById('dep-b-share').textContent = fmt(benoitDoit);
+  document.getElementById('dep-b-share').textContent = fmt(Math.abs(benoitDoit));
   document.getElementById('dep-b-balance-label').textContent =
     benoitDoit > 0
       ? `→ reste à rembourser à P&L`
-      : `→ à jour ✓`;
+      : benoitDoit < 0
+        ? `→ P&L lui doivent (voiture avancée)`
+        : `→ à jour ✓`;
 
   // Catégories
   const bycat = {};
@@ -5413,6 +5494,48 @@ function initTransport(){
   html += `<div class="tr-day-block"><p class="tr-day-title">🛫 Aller · vendredi 4 septembre</p>`;
   aller.forEach(t => html += trTicket(t));
   html += `</div>`;
+
+  // ── Voiture de location (Sixt, réservée par Benoît) ──
+  html += `<div class="tr-day-block"><p class="tr-day-title">🚗 Sur place · 4 → 25 septembre</p>
+    <div class="tr-ticket tr-plane">
+      <div class="tr-ticket-head">
+        <div class="tr-ticket-icon">🚗</div>
+        <div class="tr-ticket-head-text">
+          <div class="tr-ticket-mode">Sixt — GMC Acadia</div>
+          <div class="tr-ticket-craft">SUV 7 places (ou similaire) · boîte auto · km illimité</div>
+        </div>
+        <div class="tr-ticket-date">21 jours</div>
+      </div>
+      <div class="tr-journey">
+        <div class="tr-journey-times">
+          <div><div class="tr-time">18:00</div><div class="tr-time-lbl">04/09</div></div>
+          <div><div class="tr-time">12:00</div><div class="tr-time-lbl">25/09</div></div>
+        </div>
+        <div class="tr-journey-line">
+          <div class="tr-dot"></div>
+          <div class="tr-line-stem"></div>
+          <div class="tr-dot filled"></div>
+        </div>
+        <div class="tr-journey-stations">
+          <div class="tr-station">
+            <div class="tr-station-name">SFO — Car Rental Center</div>
+            <div class="tr-station-sub">780 N Mcdonnell Rd · AirTrain → SIXT au 4ᵉ étage</div>
+          </div>
+          <div class="tr-station">
+            <div class="tr-station-name">LAX — 9000 Bellanca Ave</div>
+            <div class="tr-station-sub">Prévoir large : trafic dense autour de LAX</div>
+          </div>
+        </div>
+      </div>
+      <div class="tr-ticket-foot">
+        <div class="tr-chip"><span class="tr-chip-emoji">🔖</span>Réf. 740061049</div>
+        <div class="tr-chip"><span class="tr-chip-emoji">🧑‍✈️</span>Conducteur : Benoît</div>
+        <div class="tr-chip"><span class="tr-chip-emoji">💶</span>1 617,42 € payés (Benoît)</div>
+        <div class="tr-chip"><span class="tr-chip-emoji">💳</span>+ US$255 sur place (2ᵉ conducteur)</div>
+      </div>
+      <div class="tr-overnight">🪪 À présenter au comptoir (au nom de Benoît) : permis + passeport + CB + voucher imprimé ou eVoucher (app)</div>
+    </div>
+  </div>`;
 
   html += `<div class="tr-day-block"><p class="tr-day-title">🛬 Retour · 25–26 septembre</p>`;
   retour.forEach(t => html += trTicket(t));
@@ -6061,8 +6184,72 @@ function updateTodoBadge(){
 function openTodoPanel(){
   closeStagePanel();
   renderTodoList();
+  renderPayTimeline();
   document.getElementById('todo-panel').classList.add('visible');
   document.getElementById('todo-panel-overlay').classList.add('visible');
+}
+
+// ─────────────────────────────────────────────────────
+// Timeline des prélèvements — dérivée de DEPENSES
+// (entrées ayant un champ echeance + montant_du)
+// ─────────────────────────────────────────────────────
+var MOIS_FR = ['jan','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
+
+function renderPayTimeline(){
+  var box = document.getElementById('pay-timeline');
+  if(!box || typeof DEPENSES === 'undefined') return;
+
+  var upcoming = DEPENSES.filter(function(d){ return d.echeance && d.montant_du; })
+    .map(function(d){ return {
+      label: d.label, amount: d.montant_du, date: new Date(d.echeance + 'T12:00:00'),
+      carte: d.carte || null, surPlace: d.statut === 'sur_place'
+    };})
+    .sort(function(a,b){ return a.date - b.date; });
+
+  if(!upcoming.length){ box.innerHTML=''; return; }
+
+  var now = new Date();
+  var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var nextIdx = -1;
+  upcoming.forEach(function(p,i){ if(nextIdx===-1 && p.date >= today) nextIdx = i; });
+
+  var totalDue = 0;
+  var html = '<div class="pay-title">💳 Prochains prélèvements</div>';
+  upcoming.forEach(function(p, i){
+    var passed = p.date < today;
+    if(!passed) totalDue += p.amount;
+    var days = Math.round((p.date - today)/86400000);
+    var inTxt = passed ? 'passé' : (days === 0 ? "aujourd'hui" : 'dans '+days+' j');
+    html += '<div class="pay-row'+(i===nextIdx?' next':'')+'"'+(passed?' style="opacity:.4"':'')+'>'+
+      '<div class="pay-date"><span class="pd-day">'+p.date.getDate()+'</span>'+
+        '<span class="pd-month">'+MOIS_FR[p.date.getMonth()]+'</span></div>'+
+      '<div class="pay-body">'+
+        '<div class="pay-label">'+p.label+'</div>'+
+        '<div class="pay-meta">'+(p.surPlace?'Sur place':'Prélèvement auto')+(p.carte?' · '+p.carte:'')+'</div>'+
+      '</div>'+
+      '<div><div class="pay-amount">'+p.amount.toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:2})+' €</div>'+
+      '<div class="pay-in">'+inTxt+'</div></div>'+
+    '</div>';
+  });
+
+  html += '<div class="pay-total"><span>Reste à sortir</span><b>'+
+    totalDue.toLocaleString('fr-FR',{maximumFractionDigits:0})+' €</b></div>';
+
+  // Barre pédagogique : part du voyage déjà payée
+  var totalTrip = 0, totalRemaining = 0;
+  DEPENSES.forEach(function(d){
+    totalTrip += (d.montant || 0);
+    if(d.echeance && d.montant_du && new Date(d.echeance+'T12:00:00') >= today) totalRemaining += d.montant_du;
+  });
+  if(totalTrip > 0){
+    var paidPct = Math.round(100 * (totalTrip - totalRemaining) / totalTrip);
+    html += '<div class="pay-progress">'+
+      '<div class="pay-progress-label"><span>Voyage déjà payé</span><span>'+paidPct+'%</span></div>'+
+      '<div class="pay-progress-track"><div class="pay-progress-fill" style="width:'+paidPct+'%"></div></div>'+
+    '</div>';
+  }
+
+  box.innerHTML = html;
 }
 function closeTodoPanel(){
   document.getElementById('todo-panel').classList.remove('visible');
