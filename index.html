@@ -1922,7 +1922,10 @@ html, body {
   .route-legend-top{ top:6px; left:6px; right:6px; gap:3px; }
   .rl-chip{ padding:4px 2px; border-radius:7px; }
   .rl-chip-leg{ font-size:10px; }
-  .rl-chip-info{ font-size:9px; }
+  .rl-chip-info{ font-size:10px; }
+  .rl-chip-info .rl-unit{ display:none; }
+  .rl-chip-info .rl-dur{ display:none; }
+  .rl-chip-info b::after{ content:' km'; font-weight:600; opacity:.7; font-size:8px; }
   .route-legend-total{ font-size:12px; padding:6px 11px; bottom:8px; left:8px; }
   .leaflet-top.leaflet-left .leaflet-control-zoom{ margin-top:46px; }
 }
@@ -2042,6 +2045,18 @@ html, body {
 }
 .pay-row:last-of-type{ border-bottom:none; }
 .pay-row.next{ background:rgba(201,119,58,.09);border-radius:10px;padding:10px 10px; }
+.pay-row{ cursor:pointer; transition:opacity .2s, background .15s; }
+.pay-row:hover{ background:rgba(255,255,255,.04); border-radius:10px; }
+.pay-row.paid{ opacity:.5; }
+.pay-row.paid .pay-label{ text-decoration:line-through; }
+.pay-check{
+  width:20px;height:20px;border-radius:6px;flex-shrink:0;
+  border:2px solid rgba(255,255,255,.28);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:#fff;
+  transition:background .15s, border-color .15s;
+}
+.pay-row.paid .pay-check{ background:#3f7a4d;border-color:#3f7a4d; }
 .pay-date{
   flex-shrink:0;width:46px;text-align:center;
   display:flex;flex-direction:column;line-height:1.15;
@@ -6195,12 +6210,27 @@ function openTodoPanel(){
 // ─────────────────────────────────────────────────────
 var MOIS_FR = ['jan','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
 
+function _payDone(){
+  try{ return JSON.parse(localStorage.getItem('trip_pay_done')||'[]'); }catch(e){ return []; }
+}
+function _paySave(a){ try{ localStorage.setItem('trip_pay_done', JSON.stringify(a)); }catch(e){} }
+function togglePay(id, e){
+  if(e) e.stopPropagation();
+  var done = _payDone();
+  var i = done.indexOf(id);
+  if(i===-1) done.push(id); else done.splice(i,1);
+  _paySave(done);
+  renderPayTimeline();
+}
+
 function renderPayTimeline(){
   var box = document.getElementById('pay-timeline');
   if(!box || typeof DEPENSES === 'undefined') return;
 
+  var done = _payDone();
   var upcoming = DEPENSES.filter(function(d){ return d.echeance && d.montant_du; })
     .map(function(d){ return {
+      id: (d.label||'').replace(/[^a-z0-9]/gi,'').slice(0,24) + Math.round(d.montant_du),
       label: d.label, amount: d.montant_du, date: new Date(d.echeance + 'T12:00:00'),
       carte: d.carte || null, surPlace: d.statut === 'sur_place'
     };})
@@ -6211,16 +6241,17 @@ function renderPayTimeline(){
   var now = new Date();
   var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   var nextIdx = -1;
-  upcoming.forEach(function(p,i){ if(nextIdx===-1 && p.date >= today) nextIdx = i; });
+  upcoming.forEach(function(p,i){ if(nextIdx===-1 && done.indexOf(p.id)===-1) nextIdx = i; });
 
   var totalDue = 0;
-  var html = '<div class="pay-title">💳 Prochains prélèvements</div>';
+  var html = '<div class="pay-title">💳 Prélèvements <span style="opacity:.5;font-weight:500;text-transform:none;letter-spacing:0">· tape pour cocher</span></div>';
   upcoming.forEach(function(p, i){
-    var passed = p.date < today;
-    if(!passed) totalDue += p.amount;
+    var paid = done.indexOf(p.id) !== -1;
+    if(!paid) totalDue += p.amount;
     var days = Math.round((p.date - today)/86400000);
-    var inTxt = passed ? 'passé' : (days === 0 ? "aujourd'hui" : 'dans '+days+' j');
-    html += '<div class="pay-row'+(i===nextIdx?' next':'')+'"'+(passed?' style="opacity:.4"':'')+'>'+
+    var inTxt = paid ? '✓ payé' : (days < 0 ? 'à confirmer' : (days === 0 ? "aujourd'hui" : 'dans '+days+' j'));
+    html += '<div class="pay-row'+(i===nextIdx?' next':'')+(paid?' paid':'')+'" onclick="togglePay(\''+p.id+'\', event)">'+
+      '<div class="pay-check">'+(paid?'✓':'')+'</div>'+
       '<div class="pay-date"><span class="pd-day">'+p.date.getDate()+'</span>'+
         '<span class="pd-month">'+MOIS_FR[p.date.getMonth()]+'</span></div>'+
       '<div class="pay-body">'+
@@ -6235,11 +6266,14 @@ function renderPayTimeline(){
   html += '<div class="pay-total"><span>Reste à sortir</span><b>'+
     totalDue.toLocaleString('fr-FR',{maximumFractionDigits:0})+' €</b></div>';
 
-  // Barre pédagogique : part du voyage déjà payée
+  // Barre pédagogique : part du voyage déjà payée (échéances cochées = payées)
   var totalTrip = 0, totalRemaining = 0;
   DEPENSES.forEach(function(d){
     totalTrip += (d.montant || 0);
-    if(d.echeance && d.montant_du && new Date(d.echeance+'T12:00:00') >= today) totalRemaining += d.montant_du;
+    if(d.echeance && d.montant_du){
+      var pid = (d.label||'').replace(/[^a-z0-9]/gi,'').slice(0,24) + Math.round(d.montant_du);
+      if(done.indexOf(pid) === -1) totalRemaining += d.montant_du;
+    }
   });
   if(totalTrip > 0){
     var paidPct = Math.round(100 * (totalTrip - totalRemaining) / totalTrip);
@@ -6696,7 +6730,7 @@ function renderRouteLegend(){
     html += '<button class="rl-chip" data-leg="'+n+'" onclick="zoomToLeg('+n+')" '+
             'title="'+(MAP_STEPS[n]?MAP_STEPS[n].city:'')+' → '+(MAP_STEPS[n+1]?MAP_STEPS[n+1].city:'')+' · '+s.km+' km · '+s.dur+'">'+
               '<span class="rl-chip-leg">'+n+'→'+(n+1)+'</span>'+
-              '<span class="rl-chip-info"><b>'+s.km+'</b> km · '+s.dur+'</span>'+
+              '<span class="rl-chip-info"><b>'+s.km+'</b><span class="rl-unit"> km</span><span class="rl-dur"> · '+s.dur+'</span></span>'+
             '</button>';
   });
   top.innerHTML = html;
