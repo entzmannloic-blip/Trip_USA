@@ -2116,6 +2116,87 @@ html, body {
   font-family:'Playfair Display',serif;font-style:italic;
   font-size:12px;color:#5a4a38;
 }
+
+/* ══ Sprint 6 ══ */
+/* Bouton Rejouer (bas-gauche, au-dessus du compte à rebours) */
+.replay-btn{
+  position:absolute;
+  bottom:94px; left:10px;
+  z-index:1000;
+  display:flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:999px;
+  background:linear-gradient(135deg,#c9773a,#a85f2b);
+  border:none;color:#fff;font-weight:700;font-size:13px;
+  cursor:pointer;white-space:nowrap;
+  box-shadow:0 3px 12px rgba(0,0,0,.45);
+  transition:transform .1s, filter .15s;
+}
+.replay-btn:hover{ filter:brightness(1.08); }
+.replay-btn:active{ transform:scale(.95); }
+.replay-btn.playing{ background:linear-gradient(135deg,#7a1f1f,#611414); }
+@media(max-width:699px){
+  .replay-btn{ font-size:12px;padding:6px 12px;bottom:88px;left:8px; }
+}
+
+/* Voiture qui roule sur le tracé pendant le replay */
+.replay-car{
+  font-size:26px;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));
+  transition:none;
+}
+
+/* Bandeau narratif du replay */
+.replay-banner{
+  position:absolute;
+  top:60px; left:50%; transform:translateX(-50%) translateY(-8px);
+  z-index:1050;
+  padding:9px 18px;border-radius:999px;
+  background:rgba(20,16,12,.9);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(245,200,122,.4);
+  color:#f7f3ee;font-size:14px;font-weight:600;white-space:nowrap;
+  box-shadow:0 6px 20px rgba(0,0,0,.5);
+  opacity:0;transition:opacity .3s, transform .3s;
+  pointer-events:none;
+}
+.replay-banner.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+.replay-banner b{ color:#f5c87a; }
+
+/* Profil d'altitude (sparkline) dans le carnet segment */
+.seg-altitude{
+  margin-top:14px;padding:12px;border-radius:10px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+}
+.seg-altitude-title{
+  font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:rgba(247,243,238,.45);margin-bottom:8px;
+  display:flex;justify-content:space-between;
+}
+.seg-altitude svg{ width:100%;height:54px;display:block; }
+.seg-alt-minmax{
+  display:flex;justify-content:space-between;
+  font-size:11px;color:rgba(247,243,238,.55);margin-top:5px;
+  font-variant-numeric:tabular-nums;
+}
+
+/* Tampons du carnet (mode Jour J) */
+.stamp-strip{
+  display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;
+}
+.stamp{
+  width:52px;height:52px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:2px dashed rgba(255,255,255,.15);
+  font-size:18px;opacity:.35;position:relative;
+  transition:opacity .3s, transform .3s;
+}
+.stamp.earned{
+  opacity:1;border:2px solid rgba(201,119,58,.6);
+  background:rgba(201,119,58,.12);
+  transform:rotate(-6deg);
+}
+.stamp .stamp-num{ font-size:8px;font-weight:800;color:rgba(247,243,238,.6);margin-top:1px; }
+.stamp.earned .stamp-num{ color:var(--accent,#c9773a); }
 .pay-date{
   flex-shrink:0;width:46px;text-align:center;
   display:flex;flex-direction:column;line-height:1.15;
@@ -2467,6 +2548,7 @@ html, body {
   <div id="countdown-pill" class="countdown-pill" onclick="countdownClick()" aria-label="Compte à rebours départ" role="button"></div>
   <button id="mustdo-toggle" class="mustdo-toggle" onclick="toggleMustdo()" aria-label="Afficher les incontournables">★ Incontournables</button>
   <button id="todo-toggle" class="todo-toggle" onclick="openTodoPanel()" aria-label="Réservations à faire">🎯 À faire <span class="todo-badge" id="todo-badge">0</span></button>
+  <button id="replay-btn" class="replay-btn" onclick="toggleReplay()" aria-label="Rejouer le voyage">▶︎ <span>Rejouer</span></button>
 </div>
 
 <!-- ══ PANNEAU "À FAIRE MAINTENANT" (réservations critiques) ══ -->
@@ -2484,6 +2566,8 @@ html, body {
       <div class="sp-dates" style="margin-bottom:8px">Les fenêtres de réservation sont ouvertes — coche au fur et à mesure.</div>
       <div id="todo-list" class="todo-list"></div>
       <div id="pay-timeline" class="pay-timeline"></div>
+      <div class="seg-section-title" style="margin-top:18px">📖 Tampons du carnet</div>
+      <div id="stamp-strip" class="stamp-strip"></div>
     </div>
   </div>
 </div>
@@ -6302,8 +6386,28 @@ function openTodoPanel(){
   closeStagePanel();
   renderTodoList();
   renderPayTimeline();
+  renderStamps();
   document.getElementById('todo-panel').classList.add('visible');
   document.getElementById('todo-panel-overlay').classList.add('visible');
+}
+
+// Tampons du carnet : une étape "tamponnée" dès que sa date est atteinte
+function renderStamps(){
+  var box = document.getElementById('stamp-strip');
+  if(!box) return;
+  var now = new Date();
+  var isTrip = (now.getFullYear()===2026 && now.getMonth()===8);
+  var curDay = isTrip ? now.getDate() : 0;
+  var ranges = (typeof TRIP_STAGE_RANGES!=='undefined') ? TRIP_STAGE_RANGES : {};
+  var emojis = {1:'🌉',2:'🏔️',3:'🏜️',4:'🎰',5:'🧗',6:'🏛️',7:'💧',8:'🦅',9:'🌴'};
+  var html = '';
+  for(var s=1;s<=9;s++){
+    var r = ranges[s] || [99,99];
+    var earned = isTrip && curDay >= r[0];
+    html += '<div class="stamp'+(earned?' earned':'')+'" title="Étape '+s+'">'+
+      '<span>'+(emojis[s]||'📍')+'</span><span class="stamp-num">'+s+'</span></div>';
+  }
+  box.innerHTML = html;
 }
 
 // ─────────────────────────────────────────────────────
@@ -6749,8 +6853,150 @@ function applyTodayMarker(){
   }
 }
 
+// Profils d'altitude par segment (m) — points échantillonnés le long de la route
+var SEGMENT_ALTITUDE = {
+ 1:{pts:[5,60,120,300,850,1200,1800],min:5,max:1800,minLbl:'SF (niveau mer)',maxLbl:'entrée parc'},
+ 2:{pts:[1200,2000,2600,3031,2400,1500,1150],min:1150,max:3031,minLbl:'Lone Pine',maxLbl:'Tioga Pass'},
+ 3:{pts:[1150,900,300,-40,-86,600,610],min:-86,max:1150,minLbl:'Badwater',maxLbl:'Lone Pine'},
+ 4:{pts:[610,500,700,900,1100,1300,1200],min:500,max:1300,minLbl:'vallée',maxLbl:'plateau'},
+ 5:{pts:[1200,1400,1600,1800,2100,2400,2438],min:1200,max:2438,minLbl:'Zion',maxLbl:'Bryce (2 438 m)'},
+ 6:{pts:[2438,2200,1900,1700,1500,1350,1280],min:1280,max:2438,minLbl:'Page',maxLbl:'Bryce'},
+ 7:{pts:[1280,1300,1500,1700,1900,2100,2150],min:1280,max:2150,minLbl:'Page',maxLbl:'Grand Canyon'},
+ 8:{pts:[2150,1900,1600,1100,700,300,30],min:30,max:2150,minLbl:'Los Angeles',maxLbl:'Grand Canyon'}
+};
+
+function altitudeSparkline(seg){
+  var a = SEGMENT_ALTITUDE[seg];
+  if(!a) return '';
+  var W=260, H=54, pad=4;
+  var min=Math.min.apply(null,a.pts), max=Math.max.apply(null,a.pts);
+  var range = (max-min)||1;
+  var n=a.pts.length;
+  var pts = a.pts.map(function(v,i){
+    var x = pad + (W-2*pad) * i/(n-1);
+    var y = pad + (H-2*pad) * (1 - (v-min)/range);
+    return [x,y];
+  });
+  var line = pts.map(function(p,i){ return (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1); }).join(' ');
+  var area = line + ' L'+pts[n-1][0].toFixed(1)+' '+H+' L'+pts[0][0].toFixed(1)+' '+H+' Z';
+  var svg = '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+
+    '<defs><linearGradient id="altg-'+seg+'" x1="0" y1="0" x2="0" y2="1">'+
+      '<stop offset="0" stop-color="#c9773a" stop-opacity="0.35"/>'+
+      '<stop offset="1" stop-color="#c9773a" stop-opacity="0"/></linearGradient></defs>'+
+    '<path d="'+area+'" fill="url(#altg-'+seg+')"/>'+
+    '<path d="'+line+'" fill="none" stroke="#e8893a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '</svg>';
+  return '<div class="seg-altitude">'+
+    '<div class="seg-altitude-title"><span>⛰️ Profil d\'altitude</span><span>Δ '+(a.max-a.min).toLocaleString('fr-FR')+' m</span></div>'+
+    svg +
+    '<div class="seg-alt-minmax"><span>▼ '+a.min+' m · '+a.minLbl+'</span><span>▲ '+a.max+' m · '+a.maxLbl+'</span></div>'+
+  '</div>';
+}
+
 var _mustdoLayer = null;
 var _mustdoVisible = false;
+
+// ─────────────────────────────────────────────────────
+// SPRINT 6 — Replay animé du voyage
+// La caméra suit le tracé, une voiture roule, les étapes
+// s'annoncent au passage. Bouton ▶︎ Rejouer.
+// ─────────────────────────────────────────────────────
+var _replayOn = false;
+var _replayRAF = null;
+var _replayCar = null;
+var _replayBanner = null;
+
+function toggleReplay(){
+  if(_replayOn){ stopReplay(); return; }
+  startReplay();
+}
+
+function stopReplay(){
+  _replayOn = false;
+  if(_replayRAF){ cancelAnimationFrame(_replayRAF); _replayRAF = null; }
+  if(_replayCar){ _tripMap.removeLayer(_replayCar); _replayCar = null; }
+  if(_replayBanner){ _replayBanner.classList.remove('show'); }
+  var btn = document.getElementById('replay-btn');
+  if(btn){ btn.classList.remove('playing'); btn.querySelector('span').textContent = 'Rejouer'; }
+  if(_tripMap){
+    var p = Object.keys(TRIP_COORDS).map(function(n){return TRIP_COORDS[n];});
+    _tripMap.flyToBounds(p, {padding:[40,40], duration:1.2});
+  }
+}
+
+function startReplay(){
+  if(!_tripMap || typeof ROUTE_COORDS === 'undefined') return;
+  closeStagePanel(); if(typeof closeSegPanel==='function') closeSegPanel(); closeTodoPanel();
+  _replayOn = true;
+  var btn = document.getElementById('replay-btn');
+  if(btn){ btn.classList.add('playing'); btn.querySelector('span').textContent = 'Stop'; }
+
+  // Bannière narrative
+  if(!_replayBanner){
+    _replayBanner = document.createElement('div');
+    _replayBanner.className = 'replay-banner';
+    var host = document.querySelector('.hero-map-stage');
+    if(host) host.appendChild(_replayBanner);
+  }
+
+  // Voiture
+  var carIcon = L.divIcon({className:'replay-car-wrap', html:'<div class="replay-car">🚗</div>', iconSize:[26,26], iconAnchor:[13,13]});
+  _replayCar = L.marker(ROUTE_COORDS[0], {icon:carIcon, zIndexOffset:1000, interactive:false}).addTo(_tripMap);
+
+  // Indices du tracé les plus proches de chaque étape → pour annoncer les villes
+  var stepIdx = {};
+  Object.keys(TRIP_COORDS).forEach(function(n){
+    var c = TRIP_COORDS[n], best=0, bd=1e9;
+    for(var i=0;i<ROUTE_COORDS.length;i++){
+      var d=Math.pow(ROUTE_COORDS[i][0]-c[0],2)+Math.pow(ROUTE_COORDS[i][1]-c[1],2);
+      if(d<bd){bd=d;best=i;}
+    }
+    stepIdx[best] = parseInt(n,10);
+  });
+
+  var total = ROUTE_COORDS.length;
+  var DURATION = 16000; // 16 s pour tout le voyage
+  var t0 = null, lastStep = -1, lastAnnounced = -1;
+
+  function showBanner(txt){
+    if(!_replayBanner) return;
+    _replayBanner.innerHTML = txt;
+    _replayBanner.classList.add('show');
+  }
+
+  function frame(ts){
+    if(!_replayOn) return;
+    if(t0===null) t0 = ts;
+    var prog = Math.min(1, (ts - t0) / DURATION);
+    var fidx = prog * (total - 1);
+    var i = Math.floor(fidx);
+    var frac = fidx - i;
+    var a = ROUTE_COORDS[i], b = ROUTE_COORDS[Math.min(i+1, total-1)];
+    var lat = a[0] + (b[0]-a[0])*frac, lng = a[1] + (b[1]-a[1])*frac;
+    _replayCar.setLatLng([lat,lng]);
+    _tripMap.panTo([lat,lng], {animate:false});
+
+    // Annonce d'étape quand on passe à proximité d'un point-ville
+    for(var k=lastAnnounced+1;k<=i;k++){
+      if(stepIdx[k] !== undefined){
+        var s = stepIdx[k];
+        showBanner('📍 <b>Étape '+s+'</b> · '+(MAP_STEPS[s]?MAP_STEPS[s].city:''));
+        lastAnnounced = k;
+      }
+    }
+
+    if(prog < 1){
+      _replayRAF = requestAnimationFrame(frame);
+    } else {
+      showBanner('🏁 <b>Arrivée à Los Angeles</b> · 2 755 km');
+      setTimeout(function(){ if(_replayOn) stopReplay(); }, 2200);
+    }
+  }
+
+  // Cadre serré au départ puis lance
+  _tripMap.flyTo(ROUTE_COORDS[0], 7, {duration:1.0});
+  setTimeout(function(){ if(_replayOn){ showBanner('📍 <b>Départ</b> · San Francisco'); _replayRAF = requestAnimationFrame(frame); } }, 1100);
+}
 
 function buildMustdoLayer(){
   if(typeof MUSTDO === 'undefined' || !_tripMap) return;
@@ -6969,6 +7215,7 @@ function openSegPanel(n){
       '<span class="seg-stop-note">'+st.d+'</span></span></div>';
   });
   if(g.fuel) html += '<div class="seg-fuel">'+g.fuel+'</div>';
+  if(typeof altitudeSparkline === 'function') html += altitudeSparkline(n);
   if(g.fact) html += '<div class="sp-fact">💡 <span>'+g.fact+'</span></div>';
   document.getElementById('seg-content').innerHTML = html;
 
