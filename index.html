@@ -1843,6 +1843,7 @@ html, body {
   box-shadow:0 0 0 4px rgba(201,119,58,.35), 0 6px 20px rgba(0,0,0,.6);
 }
 .leaflet-marker-icon.trip-marker-wrap{background:transparent;border:none}
+.leaflet-marker-icon.replay-car-wrap{background:transparent;border:none}
 /* Attribution discrete sur fond sombre */
 .leaflet-control-attribution{
   background:rgba(15,12,9,.7) !important;
@@ -2138,11 +2139,14 @@ html, body {
   .replay-btn{ font-size:12px;padding:6px 12px;bottom:88px;left:8px; }
 }
 
-/* Voiture qui roule sur le tracé pendant le replay */
+/* Voiture qui roule sur le tracé pendant le replay (SUV vu du dessus,
+   orientation dynamique = cap réel du tracé, transition douce dans les virages) */
 .replay-car{
-  font-size:26px;
-  filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));
-  transition:none;
+  width:26px;height:42px;
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.5));
+  transition:transform .25s linear;
+  transform-origin:50% 50%;
+  will-change:transform;
 }
 
 /* Bandeau narratif du replay */
@@ -6940,7 +6944,24 @@ function startReplay(){
   }
 
   // Voiture
-  var carIcon = L.divIcon({className:'replay-car-wrap', html:'<div class="replay-car">🚗</div>', iconSize:[26,26], iconAnchor:[13,13]});
+  var carIcon = L.divIcon({
+    className:'replay-car-wrap',
+    html:'<div class="replay-car" id="replay-car-rotor">'+
+      '<svg viewBox="0 0 26 42" width="26" height="42">'+
+        '<ellipse cx="13" cy="38" rx="9" ry="3" fill="rgba(0,0,0,.35)"/>'+
+        '<rect x="3" y="6" width="20" height="30" rx="7" fill="#e9e6df" stroke="#8a857a" stroke-width="1"/>'+
+        '<rect x="6" y="10" width="14" height="9" rx="2.5" fill="#2b2e33"/>'+
+        '<rect x="6.5" y="21" width="13" height="9" rx="2" fill="#3a3d42" opacity=".55"/>'+
+        '<rect x="1.5" y="12" width="3" height="6" rx="1.4" fill="#1f2124"/>'+
+        '<rect x="21.5" y="12" width="3" height="6" rx="1.4" fill="#1f2124"/>'+
+        '<rect x="1.5" y="24" width="3" height="6" rx="1.4" fill="#1f2124"/>'+
+        '<rect x="21.5" y="24" width="3" height="6" rx="1.4" fill="#1f2124"/>'+
+        '<rect x="8.5" y="3" width="9" height="4" rx="1.8" fill="#c9773a"/>'+
+        '<rect x="8.5" y="35.5" width="9" height="2.6" rx="1" fill="#7a2b2b"/>'+
+      '</svg>'+
+    '</div>',
+    iconSize:[26,42], iconAnchor:[13,21]
+  });
   _replayCar = L.marker(ROUTE_COORDS[0], {icon:carIcon, zIndexOffset:1000, interactive:false}).addTo(_tripMap);
 
   // Indices du tracé les plus proches de chaque étape → pour annoncer les villes
@@ -6975,6 +6996,15 @@ function startReplay(){
     var lat = a[0] + (b[0]-a[0])*frac, lng = a[1] + (b[1]-a[1])*frac;
     _replayCar.setLatLng([lat,lng]);
     _tripMap.panTo([lat,lng], {animate:false});
+
+    // Cap réel du tracé (0°=nord, 90°=est) → rotation de l'icône SVG
+    var dLat = b[0]-a[0], dLng = b[1]-a[1];
+    if(Math.abs(dLat) > 1e-9 || Math.abs(dLng) > 1e-9){
+      var bearing = Math.atan2(dLng, dLat) * 180 / Math.PI;
+      if(bearing < 0) bearing += 360;
+      var rotor = document.getElementById('replay-car-rotor');
+      if(rotor) rotor.style.transform = 'rotate('+bearing.toFixed(1)+'deg)';
+    }
 
     // Annonce d'étape quand on passe à proximité d'un point-ville
     for(var k=lastAnnounced+1;k<=i;k++){
