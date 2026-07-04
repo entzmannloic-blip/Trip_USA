@@ -1,3 +1,4 @@
+/* build 2026-07 sprint5 */
 /* Service worker — Grand Ouest Américain (mode hors-ligne)
    v2 : réseau d'abord pour le HTML (mises à jour immédiates),
         cache des tuiles de carte (consultation hors-ligne dans les parcs) */
