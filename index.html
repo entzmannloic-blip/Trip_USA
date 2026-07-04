@@ -2057,6 +2057,65 @@ html, body {
   transition:background .15s, border-color .15s;
 }
 .pay-row.paid .pay-check{ background:#3f7a4d;border-color:#3f7a4d; }
+
+/* ══ Carnet de route ══ */
+.seg-section-title{
+  font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent,#c9773a);margin:14px 0 8px;
+}
+.seg-stop{
+  display:flex;align-items:flex-start;gap:11px;
+  padding:9px 2px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.seg-stop:last-child{ border-bottom:none; }
+.seg-stop-emoji{ font-size:17px;flex-shrink:0;margin-top:1px; }
+.seg-stop-body{ display:flex;flex-direction:column;gap:2px;min-width:0; }
+.seg-stop-name{ font-size:13px;font-weight:700;color:#f7f3ee; }
+.seg-stop-name .opt{ font-size:10px;font-weight:600;color:rgba(247,243,238,.45);margin-left:5px; }
+.seg-stop-note{ font-size:12px;color:rgba(247,243,238,.62);line-height:1.45; }
+
+/* Encadré essence / conseil pratique */
+.seg-fuel{
+  display:flex;align-items:flex-start;gap:10px;
+  margin-top:12px;padding:11px 13px;border-radius:10px;
+  background:rgba(245,200,122,.08);
+  border:1px solid rgba(245,200,122,.3);
+  font-size:12px;color:rgba(247,243,238,.85);line-height:1.45;
+}
+
+/* Encadré "Le saviez-vous" */
+.sp-fact{
+  display:flex;align-items:flex-start;gap:10px;
+  margin-top:12px;padding:11px 13px;border-radius:10px;
+  background:rgba(143,213,170,.07);
+  border:1px solid rgba(143,213,170,.25);
+  font-size:12px;color:rgba(247,243,238,.85);line-height:1.5;
+}
+.sp-fact b{ color:#8fd5aa; }
+
+/* Capsule photo façon polaroid */
+.sp-photo{
+  margin:12px auto 4px;
+  max-width:250px;
+  background:#faf7f2;
+  padding:8px 8px 26px;
+  border-radius:3px;
+  box-shadow:0 8px 24px rgba(0,0,0,.45);
+  transform:rotate(-1.6deg);
+  position:relative;
+}
+.sp-photo img{
+  width:100%;display:block;border-radius:2px;
+  aspect-ratio:4/3;object-fit:cover;
+  background:#e8e2d8;
+}
+.sp-photo-caption{
+  position:absolute;bottom:5px;left:0;right:0;
+  text-align:center;
+  font-family:'Playfair Display',serif;font-style:italic;
+  font-size:12px;color:#5a4a38;
+}
 .pay-date{
   flex-shrink:0;width:46px;text-align:center;
   display:flex;flex-direction:column;line-height:1.15;
@@ -2429,6 +2488,35 @@ html, body {
   </div>
 </div>
 <div class="stage-panel-overlay" id="todo-panel-overlay" onclick="closeTodoPanel()"></div>
+
+<!-- ══ CARNET DE ROUTE (panneau segment) ══════════════ -->
+<div id="seg-panel" class="stage-panel" role="dialog" aria-modal="true" aria-label="Carnet de route du trajet">
+  <div class="sp-inner">
+    <div class="sp-header">
+      <div class="sp-nav">
+        <button class="sp-nav-btn" id="seg-prev" onclick="navSegPanel(-1)" aria-label="Trajet précédent">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5l-5 5 5 5"/></svg>
+        </button>
+        <span class="sp-step-counter" id="seg-counter">1 / 8</span>
+        <button class="sp-nav-btn" id="seg-next" onclick="navSegPanel(1)" aria-label="Trajet suivant">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 5l5 5-5 5"/></svg>
+        </button>
+      </div>
+      <button class="sp-close" onclick="closeSegPanel()" aria-label="Fermer">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l10 10M15 5l-10 10"/></svg>
+      </button>
+    </div>
+    <div class="sp-handle"></div>
+    <div class="sp-body">
+      <div class="sp-eyebrow" id="seg-eyebrow">Carnet de route</div>
+      <div class="sp-city" id="seg-title" style="font-size:22px">SF → Yosemite</div>
+      <div class="sp-dates" id="seg-meta">323 km · 3h48</div>
+      <div class="sp-divider"></div>
+      <div id="seg-content"></div>
+    </div>
+  </div>
+</div>
+<div class="stage-panel-overlay" id="seg-panel-overlay" onclick="closeSegPanel()"></div>
 <!-- ══ STAGE PANEL (sidebar desktop / sheet mobile) ══════ -->
 <div id="stage-panel" class="stage-panel" role="dialog" aria-modal="true" aria-label="Détail de l'étape">
   <div class="sp-inner">
@@ -6097,7 +6185,21 @@ function openStagePanel(step){
         '</span>'+
       '</div>';
   }
+  // 💡 Le saviez-vous + capsule photo
+  if(typeof STAGE_FACTS !== 'undefined' && STAGE_FACTS[step]){
+    actionsHtml += '<div class="sp-fact">💡 <span>'+STAGE_FACTS[step]+'</span></div>';
+  }
+  if(typeof STAGE_PHOTOS !== 'undefined' && typeof photoCapsule === 'function'){
+    actionsHtml += photoCapsule(STAGE_PHOTOS[step]);
+  }
   actions.innerHTML = actionsHtml;
+
+  // Vol de caméra vers l'étape
+  if(_tripMap && TRIP_COORDS[step]){
+    var z = Math.max(_tripMap.getZoom(), 8);
+    _tripMap.flyTo(TRIP_COORDS[step], z, {duration:0.9});
+  }
+  if(typeof closeSegPanel === 'function') closeSegPanel();
 
   // Pulse sur le marqueur actif
   Object.keys(_tripMarkers).forEach(function(k){
@@ -6449,6 +6551,7 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
     closeStagePanel();
     closeTodoPanel();
+    if(typeof closeSegPanel==='function') closeSegPanel();
     document.querySelectorAll('.modal-overlay.active').forEach(function(el){
       el.classList.remove('active');
     });
@@ -6736,13 +6839,152 @@ function renderRouteLegend(){
   top.innerHTML = html;
 }
 
-// Zoome sur un tronçon (étape n → n+1) et surligne la pastille
+// Zoome sur un tronçon (étape n → n+1), surligne la pastille, ouvre le carnet
 function zoomToLeg(n){
   if(!_tripMap || !TRIP_COORDS[n] || !TRIP_COORDS[n+1]) return;
-  _tripMap.fitBounds([TRIP_COORDS[n], TRIP_COORDS[n+1]], {padding:[70,70], maxZoom:9});
+  _tripMap.flyToBounds([TRIP_COORDS[n], TRIP_COORDS[n+1]], {padding:[70,70], maxZoom:9, duration:1.1});
   document.querySelectorAll('.rl-chip').forEach(function(c){
     c.classList.toggle('active', parseInt(c.getAttribute('data-leg'))===n);
   });
+  openSegPanel(n);
+}
+
+// ─────────────────────────────────────────────────────
+// CARNET DE ROUTE — arrêts, essence, anecdotes par trajet
+// (curé pour l'itinéraire réel, ordre routier)
+// ─────────────────────────────────────────────────────
+var SEGMENT_GUIDE = {
+ 1:{stops:[
+   {e:'🌬️',n:'Altamont Pass',d:'Des centaines d\'éoliennes — l\'une des premières fermes éoliennes au monde.'},
+   {e:'🛒',n:'Oakdale',d:'Dernière vraie ville pour les grosses courses avant le parc (Save Mart, stations).'},
+   {e:'📸',n:'Rim of the World Vista',d:'Premier point de vue sur le canyon de la Tuolumne, juste avant l\'entrée.'},
+   {e:'🎫',n:'Entrée Big Oak Flat',d:'Garder la réservation d\'entrée Yosemite à portée de main.'}],
+  fuel:'⛽ Plein à Oakdale ou Groveland — l\'essence dans le parc est rare et chère.',
+  fact:'La <b>Priest Grade</b>, l\'ancienne route à 18 % de pente, grimpe le même dénivelé que la nouvelle… en deux fois moins de distance. Les pionniers la descendaient en freinant avec des troncs d\'arbres.'},
+ 2:{stops:[
+   {e:'📸',n:'Olmsted Point',d:'Half Dome vu de dos — perspective que 95 % des visiteurs ne voient jamais.'},
+   {e:'🏖️',n:'Tenaya Lake',d:'Lac alpin turquoise à 2 484 m, plage de granit. Pause baignade express (froide !).'},
+   {e:'🏔️',n:'Tioga Pass',d:'3 031 m — le plus haut col routier de Californie. Photo au panneau obligatoire.'},
+   {e:'🌊',n:'Mono Lake — South Tufa',d:'Tours de calcaire surréalistes sur un lac 2,5× plus salé que l\'océan.'},
+   {e:'🥖',n:'Bishop — Erick Schat\'s Bakkerÿ',d:'Boulangerie culte de la 395 depuis 1938. Le Sheepherder Bread est une institution.'},
+   {e:'🕊️',n:'Manzanar',d:'Mémorial du camp d\'internement des Japonais-Américains (1942-45). Sobre et fort. Gratuit.'}],
+  fuel:'⛽ Essence sans souci le long de la 395 (Lee Vining, Bishop).',
+  fact:'La <b>Tioga Road</b> est fermée par la neige 6 à 7 mois par an. En septembre, vous passez dans la fenêtre idéale — elle rouvre parfois seulement fin juin.'},
+ 3:{stops:[
+   {e:'📸',n:'Father Crowley Vista',d:'Balcon sur le canyon Rainbow — des chasseurs de l\'US Navy s\'y entraînent parfois en contrebas.'},
+   {e:'⛽',n:'Panamint Springs',d:'Dernière pompe avant la fournaise (hors de prix — dépannage seulement).'},
+   {e:'🏜️',n:'Mesquite Flat Dunes',d:'Les dunes de Star Wars (Tatooine). Marcher 10 min suffit pour être seuls au monde.'},
+   {e:'📸',n:'Zabriskie Point',d:'Ton must-do #1 — badlands dorées, idéal en fin d\'après-midi.'},
+   {e:'🧂',n:'Badwater Basin',d:'−86 m, le point le plus bas d\'Amérique du Nord. Repérez la marque « Sea Level » sur la falaise.'},
+   {e:'🌄',n:'Dante\'s View',d:'1 669 m au-dessus de Badwater — toute la vallée d\'un regard. Frais même en été.'}],
+  fuel:'⛽ PLEIN COMPLET à Lone Pine avant de partir. Eau : 4 L/personne minimum dans la voiture. Clim OK mais surveiller la température moteur dans les montées.',
+  fact:'<b>Furnace Creek détient le record mondial de chaleur : 56,7 °C</b> (10 juillet 1913). En septembre, attendez-vous encore à 38-42 °C l\'après-midi — vos arrêts photo se font tôt ou tard dans la journée.'},
+ 4:{stops:[
+   {e:'🔥',n:'Valley of Fire',d:'Détour +1h30 (option) — roches rouge feu, vagues de grès. Le secret le mieux gardé du Nevada.',opt:true},
+   {e:'🏞️',n:'Virgin River Gorge',d:'L\'I-15 se faufile dans un canyon spectaculaire — le tronçon d\'autoroute le plus cher des USA à sa construction.'},
+   {e:'🛒',n:'St. George',d:'Dernière grande ville avant Zion : courses, plein, In-N-Out Burger.'}],
+  fuel:'⛽ Rien à signaler — corridor I-15 bien équipé.',
+  fact:'Sur ce trajet vous traversez <b>3 États en 40 minutes</b> (Nevada → Arizona → Utah) et vous perdez une heure : l\'Utah est en heure des montagnes (MDT). Pensez à vérifier l\'heure du check-in !'},
+ 5:{stops:[
+   {e:'📸',n:'Canyon Overlook Trail',d:'1,6 km AR juste après le tunnel — la vue iconique sur Zion pour 30 min d\'effort.'},
+   {e:'🏁',n:'Checkerboard Mesa',d:'Dôme de grès quadrillé comme un damier géant, arrêt photo au pied.'},
+   {e:'🥧',n:'Mt. Carmel Junction',d:'Thunderbird Restaurant — « Home of the Ho-Made Pies » depuis 1931.'},
+   {e:'📸',n:'Red Canyon',d:'Arches rouges traversées par la route — l\'apéritif de Bryce, souvent désert.'}],
+  fuel:'⛽ Court trajet, pas d\'enjeu.',
+  fact:'Le <b>tunnel Zion-Mt Carmel</b> (1,7 km, 1930) est percé de « galeries-fenêtres » creusées dans la falaise — à l\'époque, on s\'y arrêtait pour admirer la vue. Les camping-cars doivent payer une escorte pour le traverser.'},
+ 6:{stops:[
+   {e:'🎬',n:'Kanab',d:'« Little Hollywood » — plus de 100 westerns tournés ici. Musée gratuit des décors.'},
+   {e:'🥾',n:'Toadstool Hoodoos',d:'45 min AR depuis la US-89 — champignons de roche dignes de Star Wars, quasi personne.',opt:true},
+   {e:'📸',n:'Wahweap Overlook',d:'Premier panorama sur le lac Powell, juste avant Page. Bleu irréel sur roche orange.'}],
+  fuel:'⛽ Plein possible à Kanab. Attention : en arrivant à Page vous regagnez 1 h (l\'Arizona n\'a pas d\'heure d\'été).',
+  fact:'Le <b>lac Powell</b> a plus de 3 000 km de rivage — davantage que toute la côte ouest des États-Unis. Et ce n\'est même pas un vrai lac : c\'est le Colorado retenu par le barrage de Glen Canyon.'},
+ 7:{stops:[
+   {e:'🌮',n:'Cameron Trading Post',d:'Comptoir navajo historique (1916) — goûter le fry bread, taco navajo géant.'},
+   {e:'📸',n:'Little Colorado Gorge',d:'Gorge vertigineuse méconnue au bord de la route, stands d\'artisanat navajo.'},
+   {e:'🗼',n:'Desert View Watchtower',d:'Entrée Est du parc : votre PREMIER regard sur le Grand Canyon, du haut de la tour de Mary Colter.'},
+   {e:'📸',n:'Desert View Drive',d:'Enchaîner les points de vue (Navajo, Lipan, Grandview) jusqu\'au village — le canyon en crescendo.'}],
+  fuel:'⛽ Plein à Page. Peu de stations sur la réserve navajo.',
+  fact:'Entrer par l\'Est est le choix des connaisseurs : le canyon se révèle <b>progressivement, point par point</b>, au lieu du grand saut direct de l\'entrée Sud. Et la Watchtower (1932) imite les tours ancestrales puebloanes.'},
+ 8:{stops:[
+   {e:'🚂',n:'Williams',d:'Votre ville-étape est la dernière de la Route 66 contournée par l\'I-40 (1984) — centre-ville dans son jus.'},
+   {e:'🛣️',n:'Seligman',d:'Le village-berceau de la renaissance Route 66, qui a inspiré Radiator Springs dans Cars.'},
+   {e:'⛽',n:'Kingman',d:'Plein + musée Route 66. Mi-parcours de la grosse journée.'},
+   {e:'🫏',n:'Oatman',d:'Détour +45 min (option) : village minier envahi d\'ânes sauvages en liberté.',opt:true},
+   {e:'☕',n:'Bagdad Café',d:'Newberry Springs — LE café du film culte de 1987, perdu dans le Mojave.'}],
+  fuel:'⛽ 756 km, la plus grosse journée : pleins à Williams et Kingman, éviter d\'arriver à LA sous 1/4 de réservoir (trafic).',
+  fact:'L\'I-40 recouvre l\'ancienne <b>Route 66</b> presque tout du long. À Santa Monica, le panneau « End of the Trail » sur la jetée marque le terminus officiel des 3 940 km partis de Chicago — la boucle sera bouclée à l\'étape 9.'}
+};
+
+// Faits marquants par étape (💡 Le saviez-vous)
+var STAGE_FACTS = {
+ 1:'Le brouillard de San Francisco est si célèbre qu\'il a un prénom — <b>Karl</b> — et son propre compte sur les réseaux. En septembre, il se lève souvent l\'après-midi.',
+ 2:'<b>El Capitan</b> est le plus grand monolithe de granit au monde : 900 m de paroi verticale. Avec des jumelles depuis la prairie, cherchez les points colorés — ce sont des grimpeurs qui y dorment suspendus.',
+ 3:'Les <b>Alabama Hills</b> ont servi de décor à plus de 400 films. Et depuis Lone Pine, vous voyez à la fois le point culminant des USA continentaux (Mt Whitney, 4 421 m) et vous êtes à 1h30 du point le plus bas (Badwater, −86 m).',
+ 4:'Le Strip n\'est <b>pas à Las Vegas</b> : il se trouve à Paradise, une ville non incorporée — un montage fiscal des casinos des années 50 pour échapper aux impôts de la ville.',
+ 5:'The Narrows se randonne <b>dans la rivière</b> : la Virgin, qui a creusé tout Zion, devient le sentier lui-même. C\'est elle qui a sculpté ces parois de 300 m en un million d\'années seulement.',
+ 6:'Bryce n\'est <b>pas un canyon</b> : c\'est une série d\'amphithéâtres d\'érosion abritant la plus grande concentration de hoodoos au monde. Et son ciel nocturne est classé parmi les plus purs des USA — levez la tête !',
+ 7:'En navajo, Antelope Canyon s\'appelle <b>Tsé bighánílíní</b> — « là où l\'eau coule à travers les rochers ». Chaque canyon slot a été creusé par les crues éclair, qui le resculptent encore aujourd\'hui.',
+ 8:'Au fond du Grand Canyon, les roches ont <b>1,8 milliard d\'années</b> — presque la moitié de l\'âge de la Terre. Chaque mètre de descente du Bright Angel Trail vous fait remonter ~100 000 ans.',
+ 9:'La jetée de <b>Santa Monica</b> est le terminus officiel de la Route 66 : le panneau « End of the Trail » clôt les 3 940 km depuis Chicago — et votre propre road trip.'
+};
+
+// Capsules photo (Wikimedia Commons, libres de droits, cachées hors-ligne par le SW)
+var STAGE_PHOTOS = {
+ 1:{f:'GoldenGateBridge-001.jpg', c:'Golden Gate Bridge'},
+ 2:{f:'Tunnel View, Yosemite Valley, Yosemite NP - Diliff.jpg', c:'Tunnel View'},
+ 5:{f:'Zion angels landing view.jpg', c:'Angels Landing'},
+ 6:{f:'USA 10654 Bryce Canyon Luca Galuzzi 2007.jpg', c:'Amphithéâtre de Bryce'},
+ 7:{f:'Grand Canyon Horse Shoe Bend MC.jpg', c:'Horseshoe Bend'},
+ 8:{f:'Grand Canyon view from Pima Point 2010.jpg', c:'Grand Canyon — Pima Point'}
+};
+function photoCapsule(ph){
+  if(!ph) return '';
+  var url = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(ph.f) + '?width=640';
+  return '<div class="sp-photo"><img src="'+url+'" alt="'+ph.c+'" loading="lazy" '+
+         'onerror="this.closest(\'.sp-photo\').style.display=\'none\'">'+
+         '<div class="sp-photo-caption">'+ph.c+'</div></div>';
+}
+
+// ── Panneau carnet de route ──
+var _currentSegPanel = null;
+
+function openSegPanel(n){
+  var g = SEGMENT_GUIDE[n], s = ROUTE_SEGMENTS[n];
+  if(!g || !s) return;
+  closeStagePanel();
+  _currentSegPanel = n;
+
+  document.getElementById('seg-counter').textContent = n + ' / 8';
+  document.getElementById('seg-prev').disabled = (n <= 1);
+  document.getElementById('seg-next').disabled = (n >= 8);
+  document.getElementById('seg-title').textContent =
+    (MAP_STEPS[n]?MAP_STEPS[n].city:'') + ' → ' + (MAP_STEPS[n+1]?MAP_STEPS[n+1].city:'');
+  document.getElementById('seg-meta').textContent = s.km + ' km · ' + s.dur + ' de route';
+
+  var html = '<div class="seg-section-title">🛑 Où s\'arrêter en chemin</div>';
+  g.stops.forEach(function(st){
+    html += '<div class="seg-stop"><span class="seg-stop-emoji">'+st.e+'</span>'+
+      '<span class="seg-stop-body"><span class="seg-stop-name">'+st.n+
+      (st.opt?'<span class="opt">· OPTION</span>':'')+'</span>'+
+      '<span class="seg-stop-note">'+st.d+'</span></span></div>';
+  });
+  if(g.fuel) html += '<div class="seg-fuel">'+g.fuel+'</div>';
+  if(g.fact) html += '<div class="sp-fact">💡 <span>'+g.fact+'</span></div>';
+  document.getElementById('seg-content').innerHTML = html;
+
+  document.getElementById('seg-panel').classList.add('visible');
+  document.getElementById('seg-panel-overlay').classList.add('visible');
+}
+function closeSegPanel(){
+  document.getElementById('seg-panel').classList.remove('visible');
+  document.getElementById('seg-panel-overlay').classList.remove('visible');
+  _currentSegPanel = null;
+  document.querySelectorAll('.rl-chip').forEach(function(c){ c.classList.remove('active'); });
+}
+function navSegPanel(dir){
+  if(!_currentSegPanel) return;
+  var next = _currentSegPanel + dir;
+  if(SEGMENT_GUIDE[next]) zoomToLeg(next);
 }
 
 // Initialise quand le DOM + Leaflet sont prêts.
