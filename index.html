@@ -3373,14 +3373,69 @@ html, body {
     <button class="modal-back" id="back-sf-homeex" onclick="goBack()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h10M10 2l3 3-3 3M13 11H3M6 8l-3 3 3 3"/></svg><span class="back-label">Activités</span></button>
     <button class="modal-close" onclick="closeMl('sf-homeex')">✕</button>
     <div class="modal-eyebrow">Étape 1 · 3 nuits · 04 → 07 septembre</div>
-    <div class="modal-title">San Francisco</div>
-    <div class="modal-meta">HomeExchange · statut logement</div>
+    <div class="modal-title-row"><div class="modal-title">San Francisco</div><div class="modal-header-btns">
+      <a class="modal-header-btn modal-header-btn-annonce" href="https://www.homeexchange.fr/homes/view/3047153?utm_source=share" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Annonce</a>
+      <a class="modal-header-btn modal-header-btn-maps" href="https://maps.google.com/?q=606+16th+Avenue,+San+Francisco,+CA+94118" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> Localisation</a>
+    </div></div>
   </div>
   <div class="modal-body loge-body">
-    <div class="status-card">
-      <div class="status-row"><div class="status-name">HomeExchange à réserver</div><span class="status-tag homeex">HomeExchange</span></div>
-      <div class="status-copy">Le logement n’est pas encore bloqué. Cette étape reste à finaliser via HomeExchange.</div>
-      <div class="status-note">Conseil : lancer la recherche assez tôt pour garder de la flexibilité sur le quartier et la logistique d’arrivée.</div>
+    <div class="booking-card has-photo">
+        <div class="booking-banner" id="sf-banner">
+        <img
+          class="booking-banner-img"
+          src="./assets/sf-corina-salon.jpg"
+          alt="Salon, maison de Corina"
+          onerror="this.classList.add('error-hide');document.getElementById('sf-banner').classList.add('fallback-mode');"
+          onclick="openLightbox(this.src, this.alt)" style="cursor:zoom-in"
+        />
+        <div class="booking-banner-overlay">
+          <div class="booking-banner-top">
+            <div class="booking-banner-badge">Réservé</div>
+          </div>
+          <div class="booking-banner-bottom">
+            <div class="booking-banner-info">
+              <div class="booking-banner-name">Charming Edwardian Home</div>
+              <div class="booking-banner-dest">Chez Corina · Richmond District, San Francisco</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="booking-meta cols-3">
+        <div class="booking-meta-item">
+          <div class="booking-meta-label">Dates</div>
+          <div class="booking-meta-value">04 → 07 sept. 2026</div>
+        </div>
+        <div class="booking-meta-item">
+          <div class="booking-meta-label">Nuits</div>
+          <div class="booking-meta-value">3 nuits</div>
+        </div>
+        <div class="booking-meta-item">
+          <div class="booking-meta-label">Chambres</div>
+          <div class="booking-meta-value">4 chambres</div>
+        </div>
+      </div>
+      <div class="booking-equip">
+        <div class="booking-equip-label">Équipements</div>
+        <div class="booking-equip-grid">
+          <div class="equip-item">
+            <div class="equip-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 010 6H9"/></svg></div>
+            <span>232 m² · 4 sdb</span>
+          </div>
+          <div class="equip-item">
+            <div class="equip-icon"><svg viewBox="0 0 24 24"><path d="M3 10l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg></div>
+            <span>7 couchages</span>
+          </div>
+          <div class="equip-item">
+            <div class="equip-icon"><svg viewBox="0 0 24 24"><path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/><path d="M4 10h16"/></svg></div>
+            <span>Cheminée + piano au salon</span>
+          </div>
+          <div class="equip-item">
+            <div class="equip-icon"><svg viewBox="0 0 24 24"><path d="M4 8h16"/><path d="M4 8c0 5.5 3.6 10 8 10s8-4.5 8-10"/><path d="M12 18v4"/><path d="M8 22h8"/></svg></div>
+            <span>Jardin (barbecue)</span>
+          </div>
+        </div>
+      </div>
+      <div class="booking-comment">Belle maison édouardienne de 1918 en plein cœur du Richmond District, avec véranda lumineuse et deux salons distincts. À pied de Golden Gate Park, Ocean Beach et Baker Beach ; restaurants et cafés sur Clement Street tout proche. Bon accès transports pour le reste de la ville.</div>
     </div>
   </div>
 </div></div>
@@ -3707,7 +3762,7 @@ const DATA = {
   "sf": {
     "eyebrow": "Étape 1 · 04 → 07 septembre",
     "title": "San Francisco",
-    "meta": "Logement : HomeExchange SF (quartier à confirmer)  |  Voiture garée — privilégier marche + Uber/Lyft  |  ⚠️ Alcatraz : réserver 90j à l'avance sur recreation.gov  |  Départ vers Yosemite le 07/09 matin",
+    "meta": "Logement : HomeExchange confirmé chez Corina — 606 16th Avenue, Richmond District  |  Voiture garée — privilégier marche + Uber/Lyft  |  ⚠️ Alcatraz : réserver 90j à l'avance sur recreation.gov  |  Départ vers Yosemite le 07/09 matin",
     "days": {
       "04/09": {
         "label": "4 septembre : Arrivée SFO (18h) — soirée libre",
