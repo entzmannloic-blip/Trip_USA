@@ -1009,6 +1009,14 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   .modal-header-btn{font-size:10px;padding:5px 8px;height:28px;}
   .booking-banner-name{font-size:14px;}
 }
+@media(max-width:600px){
+  .modal-title-row{
+    flex-direction:column;align-items:flex-start;gap:8px;
+  }
+  .modal-header-btns{
+    margin-top:2px;
+  }
+}
 @media(max-width:480px){
   .modal-title-row .modal-header-btns{gap:5px;}
   .modal-header-btn{font-size:11px;height:30px;padding:0 10px;}
