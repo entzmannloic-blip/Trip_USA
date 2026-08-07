@@ -2379,11 +2379,12 @@ html, body {
    pour que titres, boutons et textes restent parfaitement lisibles. */
 .stage-panel::before{
   content:'';
-  position:absolute; inset:0;
+  position:absolute; top:0; left:0; right:0;
+  height:58%;
   background-image:var(--stage-bg, none);
   background-size:cover;
-  background-position:center;
-  opacity:.32;
+  background-position:center 30%;
+  opacity:.42;
   filter:saturate(.9);
   pointer-events:none;
   z-index:0;
@@ -2393,9 +2394,10 @@ html, body {
   content:'';
   position:absolute; inset:0;
   background:linear-gradient(180deg,
-    rgba(23,18,14,.35) 0%,
-    rgba(23,18,14,.68) 45%,
-    rgba(23,18,14,.88) 100%);
+    rgba(23,18,14,.28) 0%,
+    rgba(23,18,14,.52) 30%,
+    rgba(23,18,14,.86) 58%,
+    rgba(23,18,14,.96) 100%);
   pointer-events:none;
   z-index:1;
 }
