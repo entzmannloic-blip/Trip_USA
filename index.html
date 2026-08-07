@@ -248,7 +248,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .modal-overlay.active{opacity:1;pointer-events:all}
 .modal{background:var(--sand);border-radius:20px;width:100%;max-width:740px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);transform:translateY(24px) scale(.97);transition:transform .35s cubic-bezier(.23,1,.32,1)}
 .modal-overlay.active .modal{transform:translateY(0) scale(1)}
-.modal-header{background:var(--ink);padding:62px 28px 20px;position:relative;flex-shrink:0}
+.modal-header{background:var(--ink);padding:16px 28px 20px;position:relative;flex-shrink:0}
 .modal-header::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 80% 50%,rgba(201,119,58,.15) 0%,transparent 70%);pointer-events:none}
 .modal-eyebrow{font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;position:relative;z-index:1;max-width:100%;overflow-wrap:break-word;padding-right:0}
 .modal-title{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#fff;position:relative;z-index:1}
@@ -276,9 +276,9 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .modal-header-btn-maps{background:rgba(74,124,89,.5);color:#fff;border-color:rgba(74,124,89,.6);}
 .modal-header-btn-maps:hover{background:rgba(74,124,89,.8);border-color:rgba(74,124,89,.9);}
 
-.modal-close{position:absolute;top:16px;right:18px;z-index:2;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;transition:background .2s;font-size:17px}
+.modal-close{flex-shrink:0;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;transition:background .2s;font-size:17px}
 .modal-close:hover{background:rgba(255,255,255,.2);color:#fff}
-.modal-back{position:absolute;top:16px;right:60px;z-index:2;height:34px;padding:0 12px 0 10px;border-radius:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);cursor:pointer;color:rgba(255,255,255,.8);display:none;align-items:center;gap:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:.03em;transition:background .2s,color .2s,border-color .2s,transform .15s;white-space:nowrap}
+.modal-back{flex-shrink:0;height:34px;padding:0 12px 0 10px;border-radius:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);cursor:pointer;color:rgba(255,255,255,.8);display:none;align-items:center;gap:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:.03em;transition:background .2s,color .2s,border-color .2s,transform .15s;white-space:nowrap}
 .modal-back svg{width:14px;height:14px;flex-shrink:0}
 .modal-back:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4);color:#fff;transform:translateY(-1px)}
 .modal-back.visible{display:flex}
@@ -288,8 +288,13 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 
 /* ══ DESTINATION STEPPER (flèches en-tête entre étapes) ══ */
 .step-arrows{
-  position:absolute;top:16px;z-index:3;
-  display:flex;gap:6px;align-items:center;
+  display:flex;gap:6px;align-items:center;flex-shrink:0;
+}
+/* Barre de controles : dans le flux, au-dessus du titre.
+   Chevauchement impossible par construction. */
+.modal-ctrl-row{
+  display:flex;align-items:center;justify-content:flex-end;gap:8px;
+  min-height:34px;margin-bottom:14px;position:relative;z-index:3;
 }
 .step-arrow{
   width:34px;height:34px;border-radius:50%;
@@ -1010,16 +1015,15 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   .booking-banner-name{font-size:14px;}
 }
 @media(max-width:600px){
-  .modal-header{padding:72px 20px 18px;}
+  .modal-header{padding:14px 20px 18px;}
   .modal-title-row{
     flex-direction:column;align-items:flex-start;gap:8px;
   }
   .modal-header-btns{
     margin-top:2px;
   }
-  .modal-close{top:14px;right:14px;width:32px;height:32px;}
-  .modal-back{top:14px;right:52px;height:32px;font-size:11px;padding:0 10px 0 8px;}
-  .step-arrows{top:14px;}
+  .modal-close{width:32px;height:32px;}
+  .modal-back{height:32px;font-size:11px;padding:0 10px 0 8px;}
   .step-arrow{width:32px;height:32px;}
 }
 @media(max-width:480px){
@@ -6341,20 +6345,11 @@ function _renderStepArrows(panelType){
   var prev = MAP_STEPS[cur-1];
   var next = MAP_STEPS[cur+1];
 
-  // Le switch (.modal-back) est-il visible ? Si oui il occupe right:60px,
-  // donc on place les flèches plus à gauche. Sinon on les colle à right:60px.
-  var switchBtn = header.querySelector('.modal-back.visible');
-  var isNarrow = window.innerWidth <= 600;
-  var rightOffset = switchBtn
-    ? (isNarrow ? 148 : 164)
-    : (isNarrow ? 52 : 60);
-
   var arrowL = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12L6 8l4-4"/></svg>';
   var arrowR = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>';
 
   var wrap = document.createElement('div');
   wrap.className = 'step-arrows';
-  wrap.style.right = rightOffset + 'px';
 
   var prevTitle = prev ? 'Étape précédente : ' + prev.city : 'Première étape';
   var nextTitle = next ? 'Étape suivante : ' + next.city : 'Dernière étape';
@@ -6363,7 +6358,33 @@ function _renderStepArrows(panelType){
     `<button class="step-arrow prev" ${prev?'':'disabled'} title="${prevTitle}" aria-label="${prevTitle}" ${prev?`onclick="navStep(-1,'${panelType}')"`:''}>${arrowL}</button>` +
     `<button class="step-arrow next" ${next?'':'disabled'} title="${nextTitle}" aria-label="${nextTitle}" ${next?`onclick="navStep(1,'${panelType}')"`:''}>${arrowR}</button>`;
 
-  header.appendChild(wrap);
+  var row = _ensureCtrlRow(header);
+  row.insertBefore(wrap, row.firstChild);
+}
+
+// Garantit l'existence de la barre de contrôles en tête de header,
+// et y déplace les boutons (switch + fermer) s'ils sont encore dans le flux.
+function _ensureCtrlRow(header){
+  var row = header.querySelector('.modal-ctrl-row');
+  if(!row){
+    row = document.createElement('div');
+    row.className = 'modal-ctrl-row';
+    header.insertBefore(row, header.firstChild);
+  }
+  // Déplacer switch puis croix dans la barre, dans cet ordre
+  var back = header.querySelector(':scope > .modal-back');
+  if(back) row.appendChild(back);
+  var close = header.querySelector(':scope > .modal-close');
+  if(close) row.appendChild(close);
+  return row;
+}
+
+// Au chargement : restructurer tous les headers de modales
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.modal-header').forEach(function(h){ _ensureCtrlRow(h); });
+});
+if(document.readyState !== 'loading'){
+  document.querySelectorAll('.modal-header').forEach(function(h){ _ensureCtrlRow(h); });
 }
 
 // Passe à l'étape précédente (-1) ou suivante (+1), même type de panneau.
