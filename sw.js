@@ -2,11 +2,13 @@
 /* Service worker — Grand Ouest Américain (mode hors-ligne)
    v2 : réseau d'abord pour le HTML (mises à jour immédiates),
         cache des tuiles de carte (consultation hors-ligne dans les parcs) */
-const CACHE = 'grand-ouest-v3';
+const CACHE = 'grand-ouest-v4';
 const TILE_CACHE = 'grand-ouest-tiles-v2';
 const TILE_CACHE_MAX = 1200; // plafond de tuiles conservées (≈ 30-40 Mo)
 
 const ASSETS = [
+  './',
+  './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -72,9 +74,37 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE).then((cache) => cache.put(req, copy));
         }
         return res;
-      }).catch(() =>
-        caches.match(req).then((c) => c || caches.match('./index.html'))
-      )
+      }).catch(async () => {
+        // Hors-ligne : on tente plusieurs clés, sans jamais renvoyer null
+        // (une réponse nulle provoque « FetchEvent.respondWith received an error »)
+        const tries = [
+          () => caches.match(req),
+          () => caches.match(req, { ignoreSearch: true }),
+          () => caches.match('./index.html'),
+          () => caches.match('./index.html', { ignoreSearch: true }),
+          () => caches.match('./'),
+          () => caches.match(new URL('./index.html', self.registration.scope).href)
+        ];
+        for (const t of tries) {
+          try {
+            const hit = await t();
+            if (hit) return hit;
+          } catch (e) { /* on continue */ }
+        }
+        // Dernier recours : page lisible plutôt qu'une erreur brute
+        return new Response(
+          '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">' +
+          '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+          '<title>Hors ligne</title><style>body{margin:0;min-height:100vh;display:flex;' +
+          'align-items:center;justify-content:center;background:#17120e;color:#f7f3ee;' +
+          'font-family:-apple-system,BlinkMacSystemFont,sans-serif;text-align:center;padding:24px}' +
+          'h1{font-size:20px;margin:0 0 10px}p{opacity:.7;font-size:14px;line-height:1.5;margin:0}' +
+          '</style></head><body><div><h1>Mode hors ligne</h1>' +
+          '<p>Cette page n\'a pas encore été enregistrée.<br>' +
+          'Reconnecte-toi une fois pour la mettre en cache.</p></div></body></html>',
+          { headers: { 'Content-Type': 'text/html; charset=utf-8' }, status: 200 }
+        );
+      })
     );
     return;
   }
@@ -95,7 +125,7 @@ self.addEventListener('fetch', (event) => {
             });
           }
           return res;
-        });
+        }).catch(() => new Response('', { status: 504, statusText: 'Hors ligne' }));
       })
     );
     return;
@@ -111,7 +141,10 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE).then((cache) => cache.put(req, copy));
         }
         return res;
-      }).catch(() => caches.match('./index.html'));
+      }).catch(async () => {
+        const hit = await caches.match('./index.html');
+        return hit || new Response('', { status: 504, statusText: 'Hors ligne' });
+      });
     })
   );
 });
