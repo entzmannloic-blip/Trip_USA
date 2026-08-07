@@ -2,7 +2,7 @@
 /* Service worker — Grand Ouest Américain (mode hors-ligne)
    v2 : réseau d'abord pour le HTML (mises à jour immédiates),
         cache des tuiles de carte (consultation hors-ligne dans les parcs) */
-const CACHE = 'grand-ouest-v2';
+const CACHE = 'grand-ouest-v3';
 const TILE_CACHE = 'grand-ouest-tiles-v2';
 const TILE_CACHE_MAX = 1200; // plafond de tuiles conservées (≈ 30-40 Mo)
 
