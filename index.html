@@ -2372,7 +2372,34 @@ html, body {
   transition:transform .3s cubic-bezier(.22,.68,0,1.2), opacity .25s;
   opacity:0;
   pointer-events:none;
+  overflow:hidden;
 }
+/* Photo de la ville en filigrane derrière le contenu.
+   Deux couches : l'image atténuée + un voile sombre dégradé,
+   pour que titres, boutons et textes restent parfaitement lisibles. */
+.stage-panel::before{
+  content:'';
+  position:absolute; inset:0;
+  background-image:var(--stage-bg, none);
+  background-size:cover;
+  background-position:center;
+  opacity:.20;
+  filter:saturate(.85);
+  pointer-events:none;
+  z-index:0;
+  transition:opacity .4s, background-image .3s;
+}
+.stage-panel::after{
+  content:'';
+  position:absolute; inset:0;
+  background:linear-gradient(180deg,
+    rgba(23,18,14,.55) 0%,
+    rgba(23,18,14,.78) 45%,
+    rgba(23,18,14,.93) 100%);
+  pointer-events:none;
+  z-index:0;
+}
+.stage-panel .sp-inner{ position:relative; z-index:1; }
 .stage-panel.visible{ opacity:1; pointer-events:auto; }
 
 /* ── Desktop : sidebar droite ── */
@@ -6402,7 +6429,13 @@ function openStagePanel(step){
   });
 
   // Afficher
-  document.getElementById('stage-panel').classList.add('visible');
+  var panelEl = document.getElementById('stage-panel');
+  // Photo de la ville en fond (filigrane), si disponible
+  if(typeof stagePhotoUrl === 'function'){
+    var bgUrl = stagePhotoUrl(step, 900);
+    panelEl.style.setProperty('--stage-bg', bgUrl ? 'url("'+bgUrl+'")' : 'none');
+  }
+  panelEl.classList.add('visible');
   document.getElementById('stage-panel-overlay').classList.add('visible');
 }
 
@@ -7314,11 +7347,22 @@ var STAGE_FACTS = {
 var STAGE_PHOTOS = {
  1:{f:'GoldenGateBridge-001.jpg', c:'Golden Gate Bridge'},
  2:{f:'Tunnel View, Yosemite Valley, Yosemite NP - Diliff.jpg', c:'Tunnel View'},
+ 3:{f:'Alabama Hills under Mt. Whitney.jpg', c:'Alabama Hills & Mt Whitney'},
+ 4:{f:'Las Vegas Strip lights at night.jpg', c:'Las Vegas Strip'},
  5:{f:'Zion angels landing view.jpg', c:'Angels Landing'},
  6:{f:'USA 10654 Bryce Canyon Luca Galuzzi 2007.jpg', c:'Amphithéâtre de Bryce'},
  7:{f:'Grand Canyon Horse Shoe Bend MC.jpg', c:'Horseshoe Bend'},
- 8:{f:'Grand Canyon view from Pima Point 2010.jpg', c:'Grand Canyon — Pima Point'}
+ 8:{f:'Grand Canyon view from Pima Point 2010.jpg', c:'Grand Canyon — Pima Point'},
+ 9:{f:'Griffith Observatory skyline at sunset. (Unsplash).jpg', c:'Griffith Observatory'}
 };
+
+// URL Wikimedia d'une photo d'étape (utilisée aussi en fond de panneau)
+function stagePhotoUrl(step, width){
+  var ph = STAGE_PHOTOS[step];
+  if(!ph) return null;
+  return 'https://commons.wikimedia.org/wiki/Special:FilePath/' +
+         encodeURIComponent(ph.f) + '?width=' + (width || 640);
+}
 function photoCapsule(ph){
   if(!ph) return '';
   var url = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(ph.f) + '?width=640';
@@ -7355,7 +7399,12 @@ function openSegPanel(n){
   if(g.fact) html += '<div class="sp-fact">💡 <span>'+g.fact+'</span></div>';
   document.getElementById('seg-content').innerHTML = html;
 
-  document.getElementById('seg-panel').classList.add('visible');
+  var segEl = document.getElementById('seg-panel');
+  if(typeof stagePhotoUrl === 'function'){
+    var segBg = stagePhotoUrl(n+1, 900);
+    segEl.style.setProperty('--stage-bg', segBg ? 'url("'+segBg+'")' : 'none');
+  }
+  segEl.classList.add('visible');
   document.getElementById('seg-panel-overlay').classList.add('visible');
 }
 function closeSegPanel(){
