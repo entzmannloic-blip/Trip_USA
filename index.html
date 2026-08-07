@@ -2378,30 +2378,29 @@ html, body {
 /* Photo de la ville en filigrane derrière le contenu.
    Deux couches : l'image atténuée + un voile sombre dégradé,
    pour que titres, boutons et textes restent parfaitement lisibles. */
-.stage-panel::before{
-  content:'';
-  position:absolute; top:0; left:0; right:0;
-  height:60%;
+/* Bannière photo en haut du panneau : l'image occupe sa propre zone,
+   le contenu vit sur fond sombre uni → lisibilité garantie. */
+.sp-banner{
+  position:relative;
+  flex-shrink:0;
+  height:190px;
   background-image:var(--stage-bg, none);
   background-size:cover;
-  background-position:center 42%;
-  opacity:.72;
-  filter:saturate(1.05) brightness(1.12);
-  pointer-events:none;
-  z-index:0;
-  transition:opacity .4s;
+  background-position:center 45%;
+  background-color:#241c15;
+  display:flex;
+  align-items:flex-end;
 }
-.stage-panel::after{
-  content:'';
-  position:absolute; inset:0;
+.sp-banner-overlay{
+  width:100%;
+  padding:16px 20px 14px;
   background:linear-gradient(180deg,
-    rgba(23,18,14,.10) 0%,
-    rgba(23,18,14,.26) 26%,
-    rgba(23,18,14,.68) 48%,
-    rgba(23,18,14,.94) 68%,
-    rgba(23,18,14,.97) 100%);
-  pointer-events:none;
-  z-index:1;
+    rgba(20,15,11,0) 0%,
+    rgba(20,15,11,.45) 45%,
+    rgba(20,15,11,.88) 100%);
+}
+@media(max-width:699px){
+  .sp-banner{ height:165px; }
 }
 .stage-panel .sp-inner{ position:relative; z-index:2; }
 .stage-panel.visible{ opacity:1; pointer-events:auto; }
@@ -2435,10 +2434,12 @@ html, body {
   .sp-body{ -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
   .sp-handle{
     width:40px; height:4px;
-    background:rgba(255,255,255,.18);
+    background:rgba(255,255,255,.55);
     border-radius:2px;
-    margin:10px auto 0;
-    flex-shrink:0;
+    position:absolute; top:8px; left:50%;
+    transform:translateX(-50%);
+    z-index:5;
+    box-shadow:0 1px 4px rgba(0,0,0,.5);
   }
 }
 
@@ -2450,12 +2451,13 @@ html, body {
 /* Header nav */
 .sp-header{
   display:flex;align-items:center;justify-content:space-between;
-  padding:14px 16px 10px;
+  padding:12px 14px;
   flex-shrink:0;
-  border-bottom:1px solid rgba(255,255,255,.07);
-  background:linear-gradient(180deg, rgba(18,14,11,.82) 0%, rgba(18,14,11,.35) 70%, rgba(18,14,11,0) 100%);
-  position:relative; z-index:3;
+  position:absolute; top:0; left:0; right:0;
+  z-index:4;
+  pointer-events:none;
 }
+.sp-header > *{ pointer-events:auto; }
 .sp-nav{
   display:flex;align-items:center;gap:8px;
 }
@@ -2495,24 +2497,34 @@ html, body {
 /* Body */
 .sp-body{
   flex:1;overflow-y:auto;
-  padding:20px 20px 28px;
-  display:flex;flex-direction:column;gap:6px;
+  padding:16px 20px 24px;
+  display:flex;flex-direction:column;gap:10px;
 }
+/* Panneaux sans bannière (carnet de route, à prévoir) :
+   le contenu doit démarrer sous l'entête flottant */
+#seg-panel .sp-body,
+#todo-panel .sp-body{ padding-top:60px; }
+#seg-panel .sp-eyebrow,
+#todo-panel .sp-eyebrow,
+#seg-panel .sp-city,
+#seg-panel .sp-dates{ text-shadow:none; }
 .sp-eyebrow{
-  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
   color:#f0b27a;
-  text-shadow:0 1px 6px rgba(0,0,0,.85);
+  text-shadow:0 1px 6px rgba(0,0,0,.8);
+  margin-bottom:2px;
 }
 .sp-city{
   font-family:'Playfair Display',serif;
-  font-size:28px;font-weight:700;line-height:1.15;
+  font-size:30px;font-weight:700;line-height:1.1;
   color:#fff;
-  text-shadow:0 2px 12px rgba(0,0,0,.9), 0 1px 3px rgba(0,0,0,.8);
+  text-shadow:0 2px 10px rgba(0,0,0,.7);
 }
 .sp-dates{
-  font-size:14px;color:rgba(255,255,255,.82);
+  font-size:14px;color:rgba(255,255,255,.88);
   font-variant-numeric:tabular-nums;
-  text-shadow:0 1px 6px rgba(0,0,0,.85);
+  text-shadow:0 1px 6px rgba(0,0,0,.8);
+  margin-top:3px;
 }
 .sp-divider{
   height:1px;background:rgba(255,255,255,.08);
@@ -2526,9 +2538,8 @@ html, body {
 .sp-btn{
   display:flex;align-items:center;gap:12px;
   padding:13px 16px;border-radius:12px;
-  background:rgba(26,21,17,.68);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.11);
   color:#f7f3ee;font-size:14px;font-weight:500;
   cursor:pointer;text-align:left;
   transition:background .15s, border-color .15s, transform .1s;
@@ -2673,14 +2684,18 @@ html, body {
     </div>
     <!-- Handle (mobile drag) -->
     <div class="sp-handle"></div>
+    <!-- Bannière photo avec titre -->
+    <div class="sp-banner" id="sp-banner">
+      <div class="sp-banner-overlay">
+        <div class="sp-eyebrow" id="sp-num">Étape 1</div>
+        <div class="sp-city" id="sp-city">San Francisco</div>
+        <div class="sp-dates" id="sp-dates">04 → 07 sept.</div>
+      </div>
+    </div>
     <!-- Body -->
     <div class="sp-body">
-      <div class="sp-eyebrow" id="sp-num">Étape 1</div>
-      <div class="sp-city" id="sp-city">San Francisco</div>
-      <div class="sp-dates" id="sp-dates">04 → 07 sept.</div>
       <div class="sp-sun" id="sp-sun"></div>
       <div class="sp-weather" id="sp-weather"></div>
-      <div class="sp-divider"></div>
       <div class="sp-actions" id="sp-actions"></div>
     </div>
   </div>
@@ -7411,10 +7426,6 @@ function openSegPanel(n){
   document.getElementById('seg-content').innerHTML = html;
 
   var segEl = document.getElementById('seg-panel');
-  if(typeof stagePhotoUrl === 'function'){
-    var segBg = stagePhotoUrl(n+1, 900);
-    segEl.style.setProperty('--stage-bg', segBg ? 'url("'+segBg+'")' : 'none');
-  }
   segEl.classList.add('visible');
   document.getElementById('seg-panel-overlay').classList.add('visible');
 }
