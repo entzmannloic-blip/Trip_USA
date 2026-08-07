@@ -2366,7 +2366,7 @@ html, body {
 .stage-panel{
   position:fixed;
   z-index:1110;
-  background:linear-gradient(160deg,#1e1812 0%,#17120e 100%);
+  background:#17120e;
   border:1px solid rgba(201,119,58,.18);
   box-shadow:0 24px 64px rgba(0,0,0,.55);
   transition:transform .3s cubic-bezier(.22,.68,0,1.2), opacity .25s;
@@ -2383,23 +2383,23 @@ html, body {
   background-image:var(--stage-bg, none);
   background-size:cover;
   background-position:center;
-  opacity:.20;
-  filter:saturate(.85);
+  opacity:.32;
+  filter:saturate(.9);
   pointer-events:none;
   z-index:0;
-  transition:opacity .4s, background-image .3s;
+  transition:opacity .4s;
 }
 .stage-panel::after{
   content:'';
   position:absolute; inset:0;
   background:linear-gradient(180deg,
-    rgba(23,18,14,.55) 0%,
-    rgba(23,18,14,.78) 45%,
-    rgba(23,18,14,.93) 100%);
+    rgba(23,18,14,.35) 0%,
+    rgba(23,18,14,.68) 45%,
+    rgba(23,18,14,.88) 100%);
   pointer-events:none;
-  z-index:0;
+  z-index:1;
 }
-.stage-panel .sp-inner{ position:relative; z-index:1; }
+.stage-panel .sp-inner{ position:relative; z-index:2; }
 .stage-panel.visible{ opacity:1; pointer-events:auto; }
 
 /* ── Desktop : sidebar droite ── */
