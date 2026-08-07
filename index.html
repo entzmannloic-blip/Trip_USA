@@ -2384,7 +2384,7 @@ html, body {
   height:52%;
   background-image:var(--stage-bg, none);
   background-size:cover;
-  background-position:center 35%;
+  background-position:center 42%;
   opacity:.72;
   filter:saturate(1.05) brightness(1.12);
   pointer-events:none;
@@ -2427,8 +2427,8 @@ html, body {
     transform:translateY(100%);
     max-height:calc(100vh - 34px);
     max-height:calc(100dvh - 34px);
+    height:calc(100vh - 34px);
     height:calc(100dvh - 34px);
-    height:auto;
     display:flex; flex-direction:column;
   }
   .stage-panel.visible{ transform:translateY(0); }
@@ -7359,13 +7359,14 @@ var STAGE_PHOTOS = {
  6:{f:'USA 10654 Bryce Canyon Luca Galuzzi 2007.jpg', c:'Amphithéâtre de Bryce'},
  7:{f:'Grand Canyon Horse Shoe Bend MC.jpg', c:'Horseshoe Bend'},
  8:{f:'Grand Canyon view from Pima Point 2010.jpg', c:'Grand Canyon — Pima Point'},
- 9:{f:'Beach Santa Monica piers farris wheels.jpg', c:'Santa Monica — plage & jetée'}
+ 9:{local:'./assets/la-venice-sunset.jpg', c:'Venice Beach au coucher du soleil'}
 };
 
 // URL Wikimedia d'une photo d'étape (utilisée aussi en fond de panneau)
 function stagePhotoUrl(step, width){
   var ph = STAGE_PHOTOS[step];
   if(!ph) return null;
+  if(ph.local) return ph.local;
   return 'https://commons.wikimedia.org/wiki/Special:FilePath/' +
          encodeURIComponent(ph.f) + '?width=' + (width || 640);
 }
