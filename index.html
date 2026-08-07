@@ -2381,7 +2381,7 @@ html, body {
 .stage-panel::before{
   content:'';
   position:absolute; top:0; left:0; right:0;
-  height:52%;
+  height:60%;
   background-image:var(--stage-bg, none);
   background-size:cover;
   background-position:center 42%;
@@ -2425,10 +2425,9 @@ html, body {
     left:0; right:0; bottom:0;
     border-radius:20px 20px 0 0;
     transform:translateY(100%);
-    max-height:calc(100vh - 34px);
-    max-height:calc(100dvh - 34px);
-    height:calc(100vh - 34px);
-    height:calc(100dvh - 34px);
+    max-height:88vh;
+    max-height:88dvh;
+    height:auto;
     display:flex; flex-direction:column;
   }
   .stage-panel.visible{ transform:translateY(0); }
@@ -2454,33 +2453,38 @@ html, body {
   padding:14px 16px 10px;
   flex-shrink:0;
   border-bottom:1px solid rgba(255,255,255,.07);
+  background:linear-gradient(180deg, rgba(18,14,11,.82) 0%, rgba(18,14,11,.35) 70%, rgba(18,14,11,0) 100%);
+  position:relative; z-index:3;
 }
 .sp-nav{
   display:flex;align-items:center;gap:8px;
 }
 .sp-nav-btn{
   width:32px;height:32px;border-radius:50%;
-  background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.12);
-  color:#f7f3ee;
+  background:rgba(20,16,12,.72);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.22);
+  color:#fff;
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;
   transition:background .15s, transform .1s;
 }
-.sp-nav-btn:hover:not(:disabled){ background:rgba(201,119,58,.25); }
+.sp-nav-btn:hover:not(:disabled){ background:rgba(201,119,58,.45); }
 .sp-nav-btn:active:not(:disabled){ transform:scale(.92); }
-.sp-nav-btn:disabled{ opacity:.3; cursor:default; }
+.sp-nav-btn:disabled{ opacity:.35; cursor:default; }
 .sp-nav-btn svg{ width:16px;height:16px; }
 .sp-step-counter{
-  font-size:12px;color:rgba(247,243,238,.5);
+  font-size:12px;color:rgba(255,255,255,.8);
   font-variant-numeric:tabular-nums;
   min-width:36px;text-align:center;letter-spacing:.04em;
+  text-shadow:0 1px 5px rgba(0,0,0,.9);
 }
 .sp-close{
   width:32px;height:32px;border-radius:50%;
-  background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.12);
-  color:rgba(247,243,238,.7);
+  background:rgba(20,16,12,.72);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.22);
+  color:#fff;
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;
   transition:background .15s;
