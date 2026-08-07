@@ -2275,8 +2275,9 @@ html, body {
 .sp-sun{
   display:flex;align-items:center;gap:14px;
   margin-top:4px;
-  font-size:13px;color:rgba(247,243,238,.75);
+  font-size:13px;color:rgba(255,255,255,.88);
   font-variant-numeric:tabular-nums;
+  text-shadow:0 1px 6px rgba(0,0,0,.85);
 }
 .sp-sun span{ display:flex;align-items:center;gap:5px; }
 
@@ -2380,12 +2381,12 @@ html, body {
 .stage-panel::before{
   content:'';
   position:absolute; top:0; left:0; right:0;
-  height:58%;
+  height:68%;
   background-image:var(--stage-bg, none);
   background-size:cover;
   background-position:center 30%;
-  opacity:.42;
-  filter:saturate(.9);
+  opacity:.72;
+  filter:saturate(1.05) brightness(1.12);
   pointer-events:none;
   z-index:0;
   transition:opacity .4s;
@@ -2394,10 +2395,10 @@ html, body {
   content:'';
   position:absolute; inset:0;
   background:linear-gradient(180deg,
-    rgba(23,18,14,.28) 0%,
-    rgba(23,18,14,.52) 30%,
-    rgba(23,18,14,.86) 58%,
-    rgba(23,18,14,.96) 100%);
+    rgba(23,18,14,.10) 0%,
+    rgba(23,18,14,.30) 34%,
+    rgba(23,18,14,.72) 62%,
+    rgba(23,18,14,.94) 100%);
   pointer-events:none;
   z-index:1;
 }
@@ -2423,8 +2424,8 @@ html, body {
     left:0; right:0; bottom:0;
     border-radius:20px 20px 0 0;
     transform:translateY(100%);
-    max-height:78vh;
-    max-height:78dvh;
+    max-height:94vh;
+    max-height:94dvh;
     height:auto;
     display:flex; flex-direction:column;
   }
@@ -2493,16 +2494,19 @@ html, body {
 }
 .sp-eyebrow{
   font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--accent,#c9773a);
+  color:#f0b27a;
+  text-shadow:0 1px 6px rgba(0,0,0,.85);
 }
 .sp-city{
   font-family:'Playfair Display',serif;
   font-size:28px;font-weight:700;line-height:1.15;
-  color:#f7f3ee;
+  color:#fff;
+  text-shadow:0 2px 12px rgba(0,0,0,.9), 0 1px 3px rgba(0,0,0,.8);
 }
 .sp-dates{
-  font-size:14px;color:rgba(247,243,238,.6);
+  font-size:14px;color:rgba(255,255,255,.82);
   font-variant-numeric:tabular-nums;
+  text-shadow:0 1px 6px rgba(0,0,0,.85);
 }
 .sp-divider{
   height:1px;background:rgba(255,255,255,.08);
@@ -2516,8 +2520,9 @@ html, body {
 .sp-btn{
   display:flex;align-items:center;gap:12px;
   padding:13px 16px;border-radius:12px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.1);
+  background:rgba(26,21,17,.68);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.16);
   color:#f7f3ee;font-size:14px;font-weight:500;
   cursor:pointer;text-align:left;
   transition:background .15s, border-color .15s, transform .1s;
