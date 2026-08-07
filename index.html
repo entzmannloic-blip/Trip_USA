@@ -250,7 +250,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .modal-overlay.active .modal{transform:translateY(0) scale(1)}
 .modal-header{background:var(--ink);padding:62px 28px 20px;position:relative;flex-shrink:0}
 .modal-header::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 80% 50%,rgba(201,119,58,.15) 0%,transparent 70%);pointer-events:none}
-.modal-eyebrow{font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;position:relative;z-index:1;max-width:100%;overflow-wrap:break-word}
+.modal-eyebrow{font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;position:relative;z-index:1;max-width:100%;overflow-wrap:break-word;padding-right:0}
 .modal-title{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#fff;position:relative;z-index:1}
 .modal-meta{font-size:12px;color:rgba(255,255,255,.38);margin-top:5px;position:relative;z-index:1;line-height:1.5}
 .modal-title-row{
@@ -1010,7 +1010,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   .booking-banner-name{font-size:14px;}
 }
 @media(max-width:600px){
-  .modal-header{padding:62px 20px 18px;}
+  .modal-header{padding:72px 20px 18px;}
   .modal-title-row{
     flex-direction:column;align-items:flex-start;gap:8px;
   }
