@@ -2381,10 +2381,10 @@ html, body {
 .stage-panel::before{
   content:'';
   position:absolute; top:0; left:0; right:0;
-  height:68%;
+  height:52%;
   background-image:var(--stage-bg, none);
   background-size:cover;
-  background-position:center 30%;
+  background-position:center 35%;
   opacity:.72;
   filter:saturate(1.05) brightness(1.12);
   pointer-events:none;
@@ -2396,9 +2396,10 @@ html, body {
   position:absolute; inset:0;
   background:linear-gradient(180deg,
     rgba(23,18,14,.10) 0%,
-    rgba(23,18,14,.30) 34%,
-    rgba(23,18,14,.72) 62%,
-    rgba(23,18,14,.94) 100%);
+    rgba(23,18,14,.26) 26%,
+    rgba(23,18,14,.68) 48%,
+    rgba(23,18,14,.94) 68%,
+    rgba(23,18,14,.97) 100%);
   pointer-events:none;
   z-index:1;
 }
@@ -2424,8 +2425,9 @@ html, body {
     left:0; right:0; bottom:0;
     border-radius:20px 20px 0 0;
     transform:translateY(100%);
-    max-height:94vh;
-    max-height:94dvh;
+    max-height:calc(100vh - 34px);
+    max-height:calc(100dvh - 34px);
+    height:calc(100dvh - 34px);
     height:auto;
     display:flex; flex-direction:column;
   }
@@ -7357,7 +7359,7 @@ var STAGE_PHOTOS = {
  6:{f:'USA 10654 Bryce Canyon Luca Galuzzi 2007.jpg', c:'Amphithéâtre de Bryce'},
  7:{f:'Grand Canyon Horse Shoe Bend MC.jpg', c:'Horseshoe Bend'},
  8:{f:'Grand Canyon view from Pima Point 2010.jpg', c:'Grand Canyon — Pima Point'},
- 9:{f:'Aerial Photo of Santa Monica Pier.jpg', c:'Santa Monica Pier'}
+ 9:{f:'Beach Santa Monica piers farris wheels.jpg', c:'Santa Monica — plage & jetée'}
 };
 
 // URL Wikimedia d'une photo d'étape (utilisée aussi en fond de panneau)
