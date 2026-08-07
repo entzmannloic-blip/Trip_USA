@@ -6408,12 +6408,9 @@ function openStagePanel(step){
         '</span>'+
       '</div>';
   }
-  // 💡 Le saviez-vous + capsule photo
+  // 💡 Le saviez-vous (la photo est désormais en filigrane derrière le panneau)
   if(typeof STAGE_FACTS !== 'undefined' && STAGE_FACTS[step]){
     actionsHtml += '<div class="sp-fact">💡 <span>'+STAGE_FACTS[step]+'</span></div>';
-  }
-  if(typeof STAGE_PHOTOS !== 'undefined' && typeof photoCapsule === 'function'){
-    actionsHtml += photoCapsule(STAGE_PHOTOS[step]);
   }
   actions.innerHTML = actionsHtml;
 
@@ -7355,7 +7352,7 @@ var STAGE_PHOTOS = {
  6:{f:'USA 10654 Bryce Canyon Luca Galuzzi 2007.jpg', c:'Amphithéâtre de Bryce'},
  7:{f:'Grand Canyon Horse Shoe Bend MC.jpg', c:'Horseshoe Bend'},
  8:{f:'Grand Canyon view from Pima Point 2010.jpg', c:'Grand Canyon — Pima Point'},
- 9:{f:'Griffith Observatory skyline at sunset. (Unsplash).jpg', c:'Griffith Observatory'}
+ 9:{f:'Griffith Observatory, Los Angeles 2011.jpg', c:'Griffith Observatory'}
 };
 
 // URL Wikimedia d'une photo d'étape (utilisée aussi en fond de panneau)
